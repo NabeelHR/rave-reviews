@@ -1,0 +1,18 @@
+{
+  "name": "ravereviews",
+  "private": true,
+  "workspaces": ["apps/*"],
+  "scripts": {
+    "api": "npm run dev -w @rr/api",
+    "db:up": "docker compose up -d",
+    "db:down": "docker compose down",
+    "db:migrate": "npm run db:migrate -w @rr/api",
+    "db:seed": "npm run db:seed -w @rr/api",
+    "test": "npm run test -w @rr/api",
+    "check": "biome check ."
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^1.9.4",
+    "typescript": "^5.6.3"
+  }
+}
