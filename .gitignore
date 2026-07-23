@@ -7,3 +7,4 @@ dist
 coverage
 .claude/settings.local.json
 .Rhistory
+*.tsbuildinfo
