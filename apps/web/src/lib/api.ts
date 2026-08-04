@@ -21,7 +21,12 @@ type Opts = {
 };
 
 export async function api<T>(path: string, opts: Opts = {}): Promise<T> {
-  const headers: Record<string, string> = { "content-type": "application/json" };
+  // Only advertise a JSON body when we actually send one. Setting
+  // content-type: application/json on a bodyless request makes Fastify's
+  // JSON parser reject the empty body (FST_ERR_CTP_EMPTY_JSON_BODY) — which
+  // broke bodyless POST/DELETE calls like attendance and review deletion.
+  const headers: Record<string, string> = {};
+  if (opts.body !== undefined) headers["content-type"] = "application/json";
   if (opts.userId) headers["x-user-id"] = opts.userId;
   if (opts.admin) headers["x-admin"] = "true";
 
