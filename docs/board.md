@@ -1,5 +1,10 @@
 # Rave Reviews — Board
 
+> ⚠️ **Static snapshot.** The **live** tracker is the GitHub Project:
+> <https://github.com/users/NabeelHR/projects/2> (tasks RR-1…RR-10 are issues #1–#10).
+> This file is a point-in-time mirror kept for in-repo readability — when the two
+> disagree, trust the Project.
+
 A lightweight Jira-style board. Cap: **10 active tasks.** When a card lands in Done,
 prune it or archive below so the board never exceeds ten.
 
