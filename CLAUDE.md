@@ -10,9 +10,19 @@ narrow, usable product whose interesting engineering is also worth showing off.
 
 ## Status
 
-Design phase complete through the data model, system architecture, and the primary
-request lifecycle. **Not yet done:** the API surface pass and the concrete SQL schema /
-ERD. No application code written yet beyond an early throwaway UI prototype (see below).
+Design phase complete (data model, architecture, request lifecycle, API surface —
+`docs/api-surface.md`). **Iteration 1 backend is built and green:** full 11-table
+Drizzle schema + migration applied, Vancouver seed dataset, the complete route surface
+(Fastify + drizzle-orm + Postgres), the isolated aggregation seam (compute-on-read),
+and passing unit + integration tests — see `docs/iteration-1-status.md`. **Frontend is
+scaffolded** (Vite + React + Tailwind, page shells + API client under `apps/web`); the
+Discovery → Event → review-submit golden path is not yet verified end-to-end.
+
+Auth is still stubbed (`X-User-Id` / `X-Admin: true` headers); real auth is iteration 2.
+Deliberate iteration-1 deferrals (no `/v1` prefix, no cursor pagination, simple `{error}`
+JSON, no geo filter) are documented in `docs/iteration-1-status.md`.
+
+**Work tracking:** `docs/board.md` is the task board — start there for what's next.
 
 ## Stack (decided)
 
