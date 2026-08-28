@@ -83,8 +83,9 @@ Routes wired in `apps/api/src/app.ts`. All present, typecheck clean, tests green
 
 Intentional trade-offs for iteration 1 — worth revisiting later:
 
-- **No `/v1` prefix.** Existing routes were unprefixed; adding it is a single sweep
-  (Fastify plugin `{ prefix: "/v1" }`).
+- ~~**No `/v1` prefix.**~~ **Done (RR-5).** All routes now register inside a
+  `{ prefix: "/v1" }` sub-instance in `app.ts`; `/health` stays unversioned. Web
+  client base is `/api/v1`.
 - **No cursor pagination.** Just `?limit=` (default 50, cap 200). Data is small enough
   to defer keyset until list endpoints actually feel slow.
 - **Simple `{ error }` JSON, not RFC 7807 problem+json.**

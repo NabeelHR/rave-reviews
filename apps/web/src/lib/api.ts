@@ -1,7 +1,7 @@
 // Thin fetch wrapper. Auth headers injected by callers via `opts.userId`/`opts.admin`
 // so hooks stay in React-land and this file stays framework-free.
 
-const BASE = "/api";
+const BASE = "/api/v1";
 
 export class ApiError extends Error {
   constructor(
