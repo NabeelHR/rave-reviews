@@ -27,7 +27,6 @@ prune it or archive below so the board never exceeds ten.
 | RR-2 | **Wire remaining frontend pages to the API** — Artist, Venue, Set, User profile; fill data gaps left by the scaffold | P1 | 3 | Depends on RR-1 confirming the client works |
 | RR-3 | **Real auth (iteration 2)** — replace `X-User-Id` / `X-Admin` header stubs with NextAuth-or-similar sessions | P1 | 3 | Unblocks a shippable product |
 | RR-4 | **Real user roles** — back `requireAdmin` with a DB role instead of the `X-Admin: true` header trick | P2 | 1 | ⛔ Depends on RR-3 |
-| RR-5 | **Add `/v1` prefix** — Fastify plugin `{ prefix: "/v1" }` sweep across routes | P2 | 0.5 | Mechanical; do alongside RR-6 |
 | RR-6 | **Cursor pagination** — keyset on list endpoints, replacing `?limit=` only | P2 | 1.5 | Mechanical |
 | RR-7 | **RFC 7807 errors** — swap simple `{ error }` JSON for problem+json | P3 | 1 | Small, improves API polish |
 
@@ -44,6 +43,7 @@ prune it or archive below so the board never exceeds ten.
 | — | Design docs (product, data model, architecture, request lifecycle, API surface) | 2026-07 |
 | — | Backend iteration 1 — schema + migration, seed, full route surface, aggregation seam, tests green | 2026-07-23 |
 | — | Frontend scaffold — Vite + React + Tailwind, page shells + API client | commit `6af5a7f` |
+| RR-5 | `/v1` prefix — all routes under `{ prefix: "/v1" }`, `/health` unversioned, web client base `/api/v1` | 2026-08-28 |
 
 ---
 

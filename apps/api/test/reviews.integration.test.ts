@@ -64,7 +64,7 @@ describe("POST /events/:id/reviews", () => {
   it("creates a review with no set ratings, no attendance required", async () => {
     const res = await app.inject({
       method: "POST",
-      url: `/events/${eventId}/reviews`,
+      url: `/v1/events/${eventId}/reviews`,
       headers: { "x-user-id": userA },
       payload: { scores: { music: 8, crowd: 7, production: 9, venue: 6 } },
     });
@@ -74,14 +74,14 @@ describe("POST /events/:id/reviews", () => {
   it("upserts on the (user, event) unique constraint (edit = update)", async () => {
     const first = await app.inject({
       method: "POST",
-      url: `/events/${eventId}/reviews`,
+      url: `/v1/events/${eventId}/reviews`,
       headers: { "x-user-id": userA },
       payload: { scores: { music: 5, crowd: 5, production: 5, venue: 5 } },
     });
     expect(first.statusCode).toBe(201);
     const second = await app.inject({
       method: "POST",
-      url: `/events/${eventId}/reviews`,
+      url: `/v1/events/${eventId}/reviews`,
       headers: { "x-user-id": userA },
       payload: { scores: { music: 9, crowd: 9, production: 9, venue: 9 } },
     });
@@ -97,7 +97,7 @@ describe("POST /events/:id/reviews", () => {
   it("rejects set ratings when the user has no attendance record", async () => {
     const res = await app.inject({
       method: "POST",
-      url: `/events/${eventId}/reviews`,
+      url: `/v1/events/${eventId}/reviews`,
       headers: { "x-user-id": userA },
       payload: {
         scores: { music: 8, crowd: 8, production: 8, venue: 8 },
@@ -110,14 +110,14 @@ describe("POST /events/:id/reviews", () => {
   it("accepts set ratings once attendance exists", async () => {
     const attend = await app.inject({
       method: "POST",
-      url: `/events/${eventId}/attendance`,
+      url: `/v1/events/${eventId}/attendance`,
       headers: { "x-user-id": userA },
     });
     expect(attend.statusCode).toBe(201);
 
     const res = await app.inject({
       method: "POST",
-      url: `/events/${eventId}/reviews`,
+      url: `/v1/events/${eventId}/reviews`,
       headers: { "x-user-id": userA },
       payload: {
         scores: { music: 8, crowd: 8, production: null, venue: 8 },
@@ -133,7 +133,7 @@ describe("POST /events/:id/reviews", () => {
   it("requires auth", async () => {
     const res = await app.inject({
       method: "POST",
-      url: `/events/${eventId}/reviews`,
+      url: `/v1/events/${eventId}/reviews`,
       payload: { scores: { music: 8, crowd: 8, production: 8, venue: 8 } },
     });
     expect(res.statusCode).toBe(401);
@@ -146,7 +146,7 @@ describe("GET /events/:id", () => {
       { userId: userA, eventId, music: 8, crowd: 8, production: 10, venue: 6 },
       { userId: userB, eventId, music: 10, crowd: 6, production: null, venue: 6 },
     ]);
-    const res = await app.inject({ method: "GET", url: `/events/${eventId}` });
+    const res = await app.inject({ method: "GET", url: `/v1/events/${eventId}` });
     expect(res.statusCode).toBe(200);
     const body = res.json() as {
       aggregate: { reviewCount: number; dimensions: { music: number; production: number } };

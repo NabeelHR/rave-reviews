@@ -20,16 +20,24 @@ export function buildApp() {
     return reply.code(500).send({ error: "internal_error" });
   });
 
+  // Health stays unversioned — it's an ops liveness probe, not part of the API.
   app.get("/health", async () => ({ ok: true }));
 
-  authRoutes(app);
-  userRoutes(app);
-  venueRoutes(app);
-  eventRoutes(app);
-  artistRoutes(app);
-  setRoutes(app);
-  attendanceRoutes(app);
-  reviewRoutes(app);
+  // Everything else lives under /v1 so the surface can evolve without breaking
+  // pinned clients. Registered inside a prefixed sub-instance in one sweep.
+  app.register(
+    async (v1) => {
+      authRoutes(v1);
+      userRoutes(v1);
+      venueRoutes(v1);
+      eventRoutes(v1);
+      artistRoutes(v1);
+      setRoutes(v1);
+      attendanceRoutes(v1);
+      reviewRoutes(v1);
+    },
+    { prefix: "/v1" },
+  );
 
   return app;
 }
