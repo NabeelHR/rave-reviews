@@ -4,7 +4,15 @@ import { useFetch } from "../lib/useFetch";
 import { useUser } from "../lib/user";
 
 type Me = { user: { id: string; username: string; email: string } };
-type Attendance = { attendance: { id: string; eventId: string; createdAt: string }[] };
+type Attendance = {
+  attendance: {
+    id: string;
+    eventId: string;
+    createdAt: string;
+    eventName: string;
+    eventStartsAt: string;
+  }[];
+};
 
 export function MePage() {
   const { userId } = useUser();
@@ -62,12 +70,12 @@ export function MePage() {
             <Link
               key={a.id}
               to={`/events/${a.eventId}`}
-              className="block bg-panel border border-line rounded p-3 hover:border-accent text-sm"
+              className="block bg-panel border border-line rounded p-3 hover:border-accent"
             >
-              <span className="text-muted">
-                {new Date(a.createdAt).toLocaleDateString()} →{" "}
-              </span>
-              event {a.eventId.slice(0, 8)}…
+              <div className="text-xs text-muted mb-1">
+                {new Date(a.eventStartsAt).toLocaleDateString()}
+              </div>
+              <div className="font-medium text-sm">{a.eventName}</div>
             </Link>
           ))}
           {attend.data && attend.data.attendance.length === 0 && (

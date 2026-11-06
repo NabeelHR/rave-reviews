@@ -1,4 +1,4 @@
-import { and, eq, inArray } from "drizzle-orm";
+import { and, desc, eq, inArray } from "drizzle-orm";
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
 import { requireUser } from "../auth.js";
@@ -127,10 +127,24 @@ export function reviewRoutes(app: FastifyInstance) {
 
   app.get("/events/:id/reviews", async (req, reply) => {
     const { id: eventId } = eventParams.parse(req.params);
+    // Join the author's username so reviews are attributable in the UI.
     const rows = await db
-      .select()
+      .select({
+        id: schema.reviews.id,
+        userId: schema.reviews.userId,
+        eventId: schema.reviews.eventId,
+        music: schema.reviews.music,
+        crowd: schema.reviews.crowd,
+        production: schema.reviews.production,
+        venue: schema.reviews.venue,
+        text: schema.reviews.text,
+        updatedAt: schema.reviews.updatedAt,
+        username: schema.users.username,
+      })
       .from(schema.reviews)
-      .where(eq(schema.reviews.eventId, eventId));
+      .innerJoin(schema.users, eq(schema.reviews.userId, schema.users.id))
+      .where(eq(schema.reviews.eventId, eventId))
+      .orderBy(desc(schema.reviews.updatedAt));
     return reply.send({ reviews: rows });
   });
 

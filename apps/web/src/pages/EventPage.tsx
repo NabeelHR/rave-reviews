@@ -12,6 +12,8 @@ type EventDetail = {
   aggregate: EventAggregate;
 };
 
+type ReviewWithAuthor = Review & { username: string };
+
 function Score({ label, value, onChange, allowNa }: {
   label: string;
   value: number | null;
@@ -181,7 +183,7 @@ function ReviewForm({
 export function EventPage() {
   const { id } = useParams<{ id: string }>();
   const detail = useFetch<EventDetail>(id ? `/events/${id}` : null);
-  const reviews = useFetch<{ reviews: Review[] }>(id ? `/events/${id}/reviews` : null);
+  const reviews = useFetch<{ reviews: ReviewWithAuthor[] }>(id ? `/events/${id}/reviews` : null);
   const { userId } = useUser();
   const [attendMsg, setAttendMsg] = useState<string | null>(null);
 
@@ -298,14 +300,22 @@ export function EventPage() {
           <div className="space-y-3">
             {reviews.data?.reviews.map((r) => (
               <div key={r.id} className="bg-panel border border-line rounded p-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <Link
+                    to={`/users/${r.userId}`}
+                    className="text-sm font-medium hover:text-accent"
+                  >
+                    {r.username}
+                  </Link>
+                  <span className="text-xs text-muted ml-auto">
+                    {new Date(r.updatedAt).toLocaleDateString()}
+                  </span>
+                </div>
                 <div className="flex gap-4 text-xs text-muted mb-2">
                   <span>M {r.music}</span>
                   <span>C {r.crowd}</span>
                   <span>P {r.production ?? "N/A"}</span>
                   <span>V {r.venue}</span>
-                  <span className="ml-auto">
-                    {new Date(r.updatedAt).toLocaleDateString()}
-                  </span>
                 </div>
                 {r.text && <div className="text-sm">{r.text}</div>}
               </div>
