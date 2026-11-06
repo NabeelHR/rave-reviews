@@ -180,6 +180,47 @@ export const reviews = pgTable(
   }),
 );
 
+// ---------- Auth (RR-3) ----------
+
+// Single-use magic-link tokens. We store a hash; the raw token only ever
+// travels in the emailed link. Invite-only: a token is minted only for an
+// email that already maps to a user, so userId is captured at request time.
+export const loginTokens = pgTable(
+  "login_tokens",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    tokenHash: text("token_hash").notNull(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+    usedAt: timestamp("used_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => ({
+    tokenHashUnique: uniqueIndex("login_tokens_token_hash_unique").on(t.tokenHash),
+    userIdx: index("login_tokens_user_idx").on(t.userId),
+  }),
+);
+
+// Server-side sessions. The cookie carries a random token; we store its hash.
+export const sessions = pgTable(
+  "sessions",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    tokenHash: text("token_hash").notNull(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => ({
+    tokenHashUnique: uniqueIndex("sessions_token_hash_unique").on(t.tokenHash),
+    userIdx: index("sessions_user_idx").on(t.userId),
+  }),
+);
+
 export const setRatings = pgTable(
   "set_ratings",
   {
