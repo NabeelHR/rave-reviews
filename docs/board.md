@@ -1,14 +1,17 @@
-# Rave Reviews — Board
+# Rave Reviews — Board (DEPRECATED)
 
-> ⚠️ **Static snapshot.** The **live** tracker is the GitHub Project:
-> <https://github.com/users/NabeelHR/projects/2> (tasks RR-1…RR-10 are issues #1–#10).
-> This file is a point-in-time mirror kept for in-repo readability — when the two
-> disagree, trust the Project.
+> 🛑 **Deprecated — do not use for reference or updates.**
+> Project tracking has moved entirely to the **GitHub Project**, which is the
+> single source of truth:
+> <https://github.com/users/NabeelHR/projects/2>
+> (each `RR-N` task is a GitHub issue — see
+> <https://github.com/NabeelHR/rave-reviews/issues>).
+>
+> This file is **frozen**. Do not read it for current status and do not edit it —
+> it will drift from reality. The tables below are retained only as a historical
+> snapshot of how work was tracked in-repo during early iterations.
 
-A lightweight Jira-style board. Cap: **10 active tasks.** When a card lands in Done,
-prune it or archive below so the board never exceeds ten.
-
-**Legend:** Priority `P1` (now) → `P3` (later) · Est. in ideal days · `⛔` = blocked
+**Legend (historical):** Priority `P1` (now) → `P3` (later) · Est. in ideal days · `⛔` = blocked
 
 ---
 
