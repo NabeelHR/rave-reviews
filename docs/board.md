@@ -29,12 +29,13 @@ prune it or archive below so the board never exceeds ten.
 | RR-4 | **Real user roles** — back `requireAdmin` with a DB role instead of the `X-Admin: true` header trick | P2 | 1 | ⛔ Depends on RR-3 |
 | RR-6 | **Cursor pagination** — keyset on list endpoints, replacing `?limit=` only | P2 | 1.5 | Mechanical |
 | RR-7 | **RFC 7807 errors** — swap simple `{ error }` JSON for problem+json | P3 | 1 | Small, improves API polish |
+| RR-11 | **Malformed `X-User-Id` → 500 instead of 401** — `requireUser` queries the UUID column with the raw header, so a non-UUID throws a `PostgresError` before the "unknown user" 401 can fire. Validate as UUID first. (Issue #14) | P2 | 0.5 | Found during RR-1 verification |
 
 ## 🚧 In Progress
 
 | ID | Task | Priority | Est. | Notes |
 |------|------|:--:|:--:|-------|
-| RR-1 | **Verify frontend golden path** — Discovery → Event detail → review submission against the live API; `docker compose up` + seed first | P1 | 1 | The frontier — scaffold landed but path unproven |
+| — | _(nothing in flight)_ | | | |
 
 ## ✅ Done
 
@@ -44,6 +45,7 @@ prune it or archive below so the board never exceeds ten.
 | — | Backend iteration 1 — schema + migration, seed, full route surface, aggregation seam, tests green | 2026-07-23 |
 | — | Frontend scaffold — Vite + React + Tailwind, page shells + API client | commit `6af5a7f` |
 | RR-5 | `/v1` prefix — all routes under `{ prefix: "/v1" }`, `/health` unversioned, web client base `/api/v1` | 2026-08-28 |
+| RR-1 | Verify frontend golden path — Discovery → Event → review submission driven end-to-end against the live API (proxy + write path + compute-on-read aggregate all confirmed) | 2026-11-06 |
 
 ---
 
