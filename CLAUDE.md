@@ -22,7 +22,10 @@ Auth is still stubbed (`X-User-Id` / `X-Admin: true` headers); real auth is iter
 Deliberate iteration-1 deferrals (no `/v1` prefix, no cursor pagination, simple `{error}`
 JSON, no geo filter) are documented in `docs/iteration-1-status.md`.
 
-**Work tracking:** `docs/board.md` is the task board — start there for what's next.
+**Work tracking:** the **GitHub Project** is the single source of truth — start
+there for what's next: <https://github.com/users/NabeelHR/projects/2> (each `RR-N`
+task is a GitHub issue). `docs/board.md` is **deprecated** (frozen historical
+snapshot — do not use).
 
 ## Stack (decided)
 
