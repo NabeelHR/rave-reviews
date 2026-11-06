@@ -19,12 +19,19 @@ async function main() {
 
   console.log("seeding…");
 
+  // Stable IDs: pinned so the iteration-1 "paste an existing user id" auth stub
+  // keeps working across reseeds (otherwise every seed mints fresh UUIDs).
   const [alice, bob, chloe] = await db
     .insert(schema.users)
     .values([
-      { username: "alice", email: "alice@example.com" },
-      { username: "bob", email: "bob@example.com" },
-      { username: "chloe", email: "chloe@example.com" },
+      { id: "00000000-0000-4000-8000-000000000001", username: "alice", email: "alice@example.com" },
+      { id: "00000000-0000-4000-8000-000000000002", username: "bob", email: "bob@example.com" },
+      { id: "00000000-0000-4000-8000-000000000003", username: "chloe", email: "chloe@example.com" },
+      { id: "00000000-0000-4000-8000-000000000004", username: "nabster", email: "nabster@example.com" },
+      { id: "00000000-0000-4000-8000-000000000005", username: "dynamik", email: "dynamik@example.com" },
+      { id: "00000000-0000-4000-8000-000000000006", username: "ravedaddy", email: "ravedaddy@example.com" },
+      { id: "00000000-0000-4000-8000-000000000007", username: "ravebae", email: "ravebae@example.com" },
+      { id: "00000000-0000-4000-8000-000000000008", username: "binibopper", email: "binibopper@example.com" },
     ])
     .returning();
 
@@ -174,7 +181,16 @@ async function main() {
 
   console.log("seed complete. sample IDs:");
   console.log({
-    users: { alice: alice!.id, bob: bob!.id, chloe: chloe!.id },
+    users: {
+      alice: alice!.id,
+      bob: bob!.id,
+      chloe: chloe!.id,
+      nabster: "00000000-0000-4000-8000-000000000004",
+      dynamik: "00000000-0000-4000-8000-000000000005",
+      ravedaddy: "00000000-0000-4000-8000-000000000006",
+      ravebae: "00000000-0000-4000-8000-000000000007",
+      binibopper: "00000000-0000-4000-8000-000000000008",
+    },
     events: {
       pastJohnSummit: pastJs!.id,
       pastLakeFisher: pastLakeFisher!.id,
