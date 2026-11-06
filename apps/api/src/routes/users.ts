@@ -32,9 +32,17 @@ export function userRoutes(app: FastifyInstance) {
 
   app.get("/users/me/attendance", { preHandler: requireUser }, async (req, reply) => {
     const { limit } = listQuery.parse(req.query);
+    // Join the event so the client can show names/dates, not bare UUIDs.
     const rows = await db
-      .select()
+      .select({
+        id: schema.attendance.id,
+        eventId: schema.attendance.eventId,
+        createdAt: schema.attendance.createdAt,
+        eventName: schema.events.name,
+        eventStartsAt: schema.events.startsAt,
+      })
       .from(schema.attendance)
+      .innerJoin(schema.events, eq(schema.attendance.eventId, schema.events.id))
       .where(eq(schema.attendance.userId, req.userId as string))
       .orderBy(desc(schema.attendance.createdAt))
       .limit(limit);
