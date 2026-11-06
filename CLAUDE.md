@@ -27,6 +27,21 @@ there for what's next: <https://github.com/users/NabeelHR/projects/2> (each `RR-
 task is a GitHub issue). `docs/board.md` is **deprecated** (frozen historical
 snapshot — do not use).
 
+**PR ↔ task convention:** every change lands via PR from a branch (never commit to
+main), and every PR references its task:
+
+- **Branch:** `rr-<N>-<slug>` — e.g. `rr-2-wire-pages`.
+- **PR title:** `RR-<N> <type>(<scope>): <summary>` — the `RR-<N>` comes **first**, and
+  `(<scope>)` is **required**. e.g. `RR-2 feat(web): wire profile pages`.
+- **PR body + commit trailer:** include `Closes #<issue>` using the **GitHub issue
+  number**, not `RR-<N>`.
+
+On merge, `Closes #<issue>` auto-closes the issue and the Project's "closed → Done"
+workflow moves the card to Done — no manual status change needed. `RR-<N>` is the
+human task label (in the title); `#<issue>` is the GitHub link (in the body, for
+automation). The two numbering systems differ: `RR-<N>` is the stable task ID, while
+`#<n>` is GitHub's shared counter across *both* issues and PRs — they do not line up.
+
 ## Stack (decided)
 
 - **Frontend:** React + TypeScript
