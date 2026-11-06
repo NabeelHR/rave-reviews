@@ -1,3 +1,4 @@
+import "./env.js"; // must be first — loads .env before anything reads process.env
 import { buildApp } from "./app.js";
 
 const port = Number(process.env.PORT ?? 3000);
