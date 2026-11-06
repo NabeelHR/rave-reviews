@@ -31,7 +31,8 @@ snapshot — do not use).
 main), and every PR references its task:
 
 - **Branch:** `rr-<N>-<slug>` — e.g. `rr-2-wire-pages`.
-- **PR title:** `<type>(<scope>): <summary> (RR-<N>)` — e.g. `feat(web): wire profile pages (RR-2)`.
+- **PR title:** `RR-<N> <type>(<scope>): <summary>` — the `RR-<N>` comes **first**, and
+  `(<scope>)` is **required**. e.g. `RR-2 feat(web): wire profile pages`.
 - **PR body + commit trailer:** include `Closes #<issue>` using the **GitHub issue
   number**, not `RR-<N>`.
 
