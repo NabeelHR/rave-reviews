@@ -67,10 +67,12 @@ function ReviewForm({
   eventId,
   existing,
   onDone,
+  onCancel,
 }: {
   eventId: string;
   existing: Review | null;
   onDone: () => void;
+  onCancel?: () => void;
 }) {
   const { userId } = useUser();
   const [music, setMusic] = useState<number | null>(existing?.music ?? 8);
@@ -180,8 +182,79 @@ function ReviewForm({
             Delete
           </button>
         )}
+        {onCancel && (
+          <button
+            type="button"
+            onClick={onCancel}
+            disabled={busy}
+            className="px-4 py-2 rounded border border-line text-sm text-muted hover:text-white ml-auto"
+          >
+            Cancel
+          </button>
+        )}
       </div>
     </form>
+  );
+}
+
+// Progressive disclosure: don't dump the ~40-button form on the page by default —
+// reveal it only when the user intends to write/edit a review.
+function ReviewPanel({
+  eventId,
+  mine,
+  onDone,
+}: {
+  eventId: string;
+  mine: Review | null;
+  onDone: () => void;
+}) {
+  const { userId } = useUser();
+  const [open, setOpen] = useState(false);
+
+  if (!userId) {
+    return <div className="text-muted text-sm">Sign in to leave a review.</div>;
+  }
+  if (open) {
+    return (
+      <ReviewForm
+        key={mine?.id ?? "new"}
+        eventId={eventId}
+        existing={mine}
+        onDone={() => {
+          setOpen(false);
+          onDone();
+        }}
+        onCancel={() => setOpen(false)}
+      />
+    );
+  }
+  return (
+    <button
+      type="button"
+      onClick={() => setOpen(true)}
+      className="w-full px-4 py-2 rounded bg-accent text-sm font-medium"
+    >
+      {mine ? "Edit your review" : "Write a review"}
+    </button>
+  );
+}
+
+// Keep long reviews from dominating the list; reveal the full text on demand.
+function ReviewText({ text }: { text: string }) {
+  const [expanded, setExpanded] = useState(false);
+  const LIMIT = 180;
+  if (text.length <= LIMIT) return <div className="text-sm">{text}</div>;
+  return (
+    <div className="text-sm">
+      {expanded ? text : `${text.slice(0, LIMIT).trimEnd()}… `}
+      <button
+        type="button"
+        onClick={() => setExpanded((v) => !v)}
+        className="text-accent hover:underline text-xs"
+      >
+        {expanded ? "show less" : "read more"}
+      </button>
+    </div>
   );
 }
 
@@ -319,7 +392,7 @@ export function EventPage() {
                 <div className="mb-2">
                   <DimensionScores dims={r} />
                 </div>
-                {r.text && <div className="text-sm">{r.text}</div>}
+                {r.text && <ReviewText text={r.text} />}
               </div>
             ))}
             {reviews.data && reviews.data.reviews.length === 0 && (
@@ -331,22 +404,16 @@ export function EventPage() {
 
       <div className="lg:col-span-1">
         {id && !reviews.loading && (
-          (() => {
-            const mine = userId
-              ? reviews.data?.reviews.find((r) => r.userId === userId) ?? null
-              : null;
-            return (
-              <ReviewForm
-                key={mine?.id ?? "new"}
-                eventId={id}
-                existing={mine}
-                onDone={() => {
-                  detail.refresh();
-                  reviews.refresh();
-                }}
-              />
-            );
-          })()
+          <ReviewPanel
+            eventId={id}
+            mine={
+              userId ? reviews.data?.reviews.find((r) => r.userId === userId) ?? null : null
+            }
+            onDone={() => {
+              detail.refresh();
+              reviews.refresh();
+            }}
+          />
         )}
       </div>
     </div>
