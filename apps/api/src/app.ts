@@ -1,3 +1,5 @@
+import { fileURLToPath } from "node:url";
+import fastifyStatic from "@fastify/static";
 import Fastify from "fastify";
 import { ZodError } from "zod";
 import { artistRoutes } from "./routes/artists.js";
@@ -38,6 +40,24 @@ export function buildApp() {
     },
     { prefix: "/v1" },
   );
+
+  // When SERVE_SPA=true the same server also serves the built React app, so the
+  // whole thing is one origin (no CORS). In dev, Vite serves the SPA instead.
+  // (Gated on its own flag, not NODE_ENV, so the deploy's build step still
+  // installs devDependencies.)
+  if (process.env.SERVE_SPA === "true") {
+    const dist = fileURLToPath(new URL("../../web/dist", import.meta.url));
+    app.register(fastifyStatic, { root: dist, wildcard: false });
+    // SPA fallback: anything that isn't a real file or an API route returns
+    // index.html so client-side routes (e.g. /events/:id, /auth/callback) work
+    // on direct load. API misses still get a JSON 404.
+    app.setNotFoundHandler((req, reply) => {
+      if (req.method !== "GET" || req.url.startsWith("/v1") || req.url.startsWith("/health")) {
+        return reply.code(404).send({ error: "not found" });
+      }
+      return reply.sendFile("index.html");
+    });
+  }
 
   return app;
 }
