@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { DimensionScores } from "../components/Score";
 import type { Review } from "../lib/api";
 import { useFetch } from "../lib/useFetch";
 import { useUser } from "../lib/user";
@@ -43,12 +44,9 @@ export function MePage() {
               to={`/events/${r.eventId}`}
               className="block bg-panel border border-line rounded p-3 hover:border-accent"
             >
-              <div className="flex gap-4 text-xs text-muted">
-                <span>M {r.music}</span>
-                <span>C {r.crowd}</span>
-                <span>P {r.production ?? "N/A"}</span>
-                <span>V {r.venue}</span>
-                <span className="ml-auto">
+              <div className="flex items-center justify-between gap-4">
+                <DimensionScores dims={r} />
+                <span className="text-xs text-muted shrink-0">
                   {new Date(r.updatedAt).toLocaleDateString()}
                 </span>
               </div>

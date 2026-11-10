@@ -1,16 +1,11 @@
-const DIMS = [
-  { key: "music", label: "Music" },
-  { key: "crowd", label: "Crowd" },
-  { key: "production", label: "Production" },
-  { key: "venue", label: "Venue" },
-] as const;
+import { DIMENSIONS, type Dims } from "./Score";
 
-type Dims = { music: number | null; crowd: number | null; production: number | null; venue: number | null };
-
+// The four-dimension breakdown as labeled bars (used for aggregates). Single-value
+// and per-review readouts live in ./Score.
 export function ScoreBars({ dims }: { dims: Dims }) {
   return (
     <div className="grid grid-cols-4 gap-4">
-      {DIMS.map((d) => {
+      {DIMENSIONS.map((d) => {
         const v = dims[d.key];
         const pct = v == null ? 0 : (v / 10) * 100;
         return (
@@ -28,17 +23,6 @@ export function ScoreBars({ dims }: { dims: Dims }) {
           </div>
         );
       })}
-    </div>
-  );
-}
-
-export function BigScore({ value }: { value: number | null }) {
-  return (
-    <div className="flex items-baseline gap-2">
-      <span className="text-5xl font-bold tracking-tight">
-        {value == null ? "—" : value.toFixed(1)}
-      </span>
-      <span className="text-muted text-sm">/ 10</span>
     </div>
   );
 }
