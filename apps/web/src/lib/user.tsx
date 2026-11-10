@@ -1,45 +1,60 @@
-import { createContext, useContext, useEffect, useMemo, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { api } from "./api";
 
-// Iteration-1 user stub: we hold a userId in localStorage and inject it into
-// every request as X-User-Id (matching the API's requireUser middleware).
-// Real auth lands in iteration 2.
+// Session-based identity (RR-3). The httpOnly session cookie is the source of
+// truth; we learn who we are by calling /users/me. No localStorage, no headers.
+
+type Me = { id: string; username: string; email: string; isAdmin: boolean };
 
 type UserCtx = {
+  user: Me | null;
   userId: string | null;
-  setUserId: (id: string | null) => void;
   isAdmin: boolean;
-  setIsAdmin: (v: boolean) => void;
+  loading: boolean;
+  refresh: () => Promise<void>;
+  logout: () => Promise<void>;
 };
 
 const Ctx = createContext<UserCtx | null>(null);
-const USER_KEY = "rr.userId";
-const ADMIN_KEY = "rr.admin";
 
 export function UserProvider({ children }: { children: React.ReactNode }) {
-  const [userId, setUserIdState] = useState<string | null>(
-    () => localStorage.getItem(USER_KEY),
-  );
-  const [isAdmin, setIsAdminState] = useState<boolean>(
-    () => localStorage.getItem(ADMIN_KEY) === "true",
-  );
+  const [user, setUser] = useState<Me | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  const refresh = useCallback(async () => {
+    try {
+      const res = await api<{ user: Me }>("/users/me");
+      setUser(res.user);
+    } catch {
+      setUser(null); // 401 when not signed in
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
-    if (userId) localStorage.setItem(USER_KEY, userId);
-    else localStorage.removeItem(USER_KEY);
-  }, [userId]);
+    refresh();
+  }, [refresh]);
 
-  useEffect(() => {
-    localStorage.setItem(ADMIN_KEY, String(isAdmin));
-  }, [isAdmin]);
+  const logout = useCallback(async () => {
+    try {
+      await api("/auth/logout", { method: "POST" });
+    } catch {
+      // ignore — clear local state regardless
+    }
+    setUser(null);
+  }, []);
 
   const value = useMemo<UserCtx>(
     () => ({
-      userId,
-      setUserId: setUserIdState,
-      isAdmin,
-      setIsAdmin: setIsAdminState,
+      user,
+      userId: user?.id ?? null,
+      isAdmin: user?.isAdmin ?? false,
+      loading,
+      refresh,
+      logout,
     }),
-    [userId, isAdmin],
+    [user, loading, refresh, logout],
   );
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
