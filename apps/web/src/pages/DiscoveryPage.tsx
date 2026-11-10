@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
+import { Score } from "../components/Score";
 import type { Event } from "../lib/api";
 import { useFetch } from "../lib/useFetch";
 
@@ -10,14 +11,28 @@ function EventCard({ e }: { e: Event }) {
       to={`/events/${e.id}`}
       className="block bg-panel border border-line rounded-lg p-4 hover:border-accent transition"
     >
-      <div className="text-xs uppercase tracking-wider text-muted mb-1">
-        {when.toLocaleDateString(undefined, {
-          weekday: "short",
-          month: "short",
-          day: "numeric",
-        })}
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <div className="text-xs uppercase tracking-wider text-muted mb-1">
+            {when.toLocaleDateString(undefined, {
+              weekday: "short",
+              month: "short",
+              day: "numeric",
+            })}
+          </div>
+          <div className="text-lg font-semibold leading-snug">{e.name}</div>
+        </div>
+        {e.score != null && (
+          <div className="text-accent shrink-0">
+            <Score value={e.score} size="md" showMax={false} />
+          </div>
+        )}
       </div>
-      <div className="text-lg font-semibold">{e.name}</div>
+      <div className="mt-3 text-xs text-muted">
+        {e.reviewCount
+          ? `${e.reviewCount} review${e.reviewCount === 1 ? "" : "s"}`
+          : "No reviews yet"}
+      </div>
     </Link>
   );
 }
