@@ -1,5 +1,5 @@
-// Thin fetch wrapper. Auth headers injected by callers via `opts.userId`/`opts.admin`
-// so hooks stay in React-land and this file stays framework-free.
+// Thin fetch wrapper. Auth rides on the session cookie (sent via
+// `credentials: "include"`), so callers no longer inject identity headers.
 
 const BASE = "/api/v1";
 
@@ -15,8 +15,6 @@ export class ApiError extends Error {
 type Opts = {
   method?: string;
   body?: unknown;
-  userId?: string | null;
-  admin?: boolean;
   query?: Record<string, string | number | undefined | null>;
 };
 
@@ -27,8 +25,6 @@ export async function api<T>(path: string, opts: Opts = {}): Promise<T> {
   // broke bodyless POST/DELETE calls like attendance and review deletion.
   const headers: Record<string, string> = {};
   if (opts.body !== undefined) headers["content-type"] = "application/json";
-  if (opts.userId) headers["x-user-id"] = opts.userId;
-  if (opts.admin) headers["x-admin"] = "true";
 
   let url = BASE + path;
   if (opts.query) {
@@ -43,6 +39,7 @@ export async function api<T>(path: string, opts: Opts = {}): Promise<T> {
   const res = await fetch(url, {
     method: opts.method ?? "GET",
     headers,
+    credentials: "include", // send/receive the session cookie
     body: opts.body === undefined ? undefined : JSON.stringify(opts.body),
   });
   const text = await res.text();

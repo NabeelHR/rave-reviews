@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { api, ApiError } from "./api";
-import { useUser } from "./user";
 
 type State<T> = { data: T | null; error: ApiError | null; loading: boolean };
 
@@ -11,7 +10,6 @@ export function useFetch<T>(
   query?: Record<string, string | number | undefined | null>,
   deps: unknown[] = [],
 ) {
-  const { userId } = useUser();
   const [state, setState] = useState<State<T>>({ data: null, error: null, loading: !!path });
   const [tick, setTick] = useState(0);
 
@@ -19,7 +17,7 @@ export function useFetch<T>(
     if (!path) return;
     let cancelled = false;
     setState((s) => ({ ...s, loading: true }));
-    api<T>(path, { query, userId })
+    api<T>(path, { query })
       .then((data) => !cancelled && setState({ data, error: null, loading: false }))
       .catch(
         (err) =>
