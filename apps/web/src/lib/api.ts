@@ -67,6 +67,9 @@ export type Event = {
   venueId: string;
   startsAt: string;
   endsAt: string | null;
+  // Present on the discovery list (GET /events); omitted elsewhere.
+  score?: number | null;
+  reviewCount?: number;
 };
 
 export type Artist = { id: string; name: string; canonicalName: string };
