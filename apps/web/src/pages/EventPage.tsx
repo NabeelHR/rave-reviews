@@ -92,7 +92,6 @@ function ReviewForm({
       if (editing) {
         await api(`/reviews/${existing!.id}`, {
           method: "PATCH",
-          userId,
           body: {
             scores: { music, crowd, production, venue },
             text: text || null,
@@ -101,7 +100,6 @@ function ReviewForm({
       } else {
         await api(`/events/${eventId}/reviews`, {
           method: "POST",
-          userId,
           body: {
             scores: { music, crowd, production, venue },
             text: text || undefined,
@@ -122,7 +120,7 @@ function ReviewForm({
     setBusy(true);
     setErr(null);
     try {
-      await api(`/reviews/${existing.id}`, { method: "DELETE", userId });
+      await api(`/reviews/${existing.id}`, { method: "DELETE" });
       onDone();
     } catch (e) {
       setErr((e as ApiError).body ? ((e as ApiError).body as any).error : "delete failed");
@@ -190,7 +188,7 @@ export function EventPage() {
   async function attend() {
     if (!id || !userId) return;
     try {
-      await api(`/events/${id}/attendance`, { method: "POST", userId });
+      await api(`/events/${id}/attendance`, { method: "POST" });
       setAttendMsg("Attendance recorded.");
     } catch {
       setAttendMsg("Could not record attendance.");

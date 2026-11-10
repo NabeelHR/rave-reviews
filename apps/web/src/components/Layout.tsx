@@ -4,114 +4,73 @@ import { api } from "../lib/api";
 import { useUser } from "../lib/user";
 
 function UserBar() {
-  const { userId, setUserId, isAdmin, setIsAdmin } = useUser();
-  const [showLogin, setShowLogin] = useState(false);
-  const [uid, setUid] = useState("");
-  const [signupName, setSignupName] = useState("");
-  const [signupEmail, setSignupEmail] = useState("");
+  const { user, loading, logout } = useUser();
+  const [email, setEmail] = useState("");
+  const [sent, setSent] = useState(false);
+  const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
-  async function signup(e: React.FormEvent) {
-    e.preventDefault();
-    setErr(null);
-    try {
-      const res = await api<{ user: { id: string } }>("/auth/signup", {
-        method: "POST",
-        body: { username: signupName, email: signupEmail },
-      });
-      setUserId(res.user.id);
-      setShowLogin(false);
-      setSignupName("");
-      setSignupEmail("");
-    } catch (e: any) {
-      setErr(e?.body?.error ?? "signup failed");
-    }
-  }
+  if (loading) return <div className="text-sm text-muted">…</div>;
 
-  if (userId) {
+  if (user) {
     return (
       <div className="flex items-center gap-3 text-sm">
         <span className="text-muted">signed in as</span>
-        <code className="text-white/80 text-xs bg-panel px-2 py-1 rounded">
-          {userId.slice(0, 8)}…
-        </code>
-        <label className="flex items-center gap-1 text-muted">
-          <input
-            type="checkbox"
-            checked={isAdmin}
-            onChange={(e) => setIsAdmin(e.target.checked)}
-          />
-          admin
-        </label>
-        <button
-          className="text-muted hover:text-white"
-          onClick={() => setUserId(null)}
-        >
+        <span className="text-white/90">{user.username}</span>
+        {user.isAdmin && (
+          <span className="text-[10px] uppercase tracking-wider text-accent border border-accent px-1.5 py-0.5 rounded">
+            admin
+          </span>
+        )}
+        <button className="text-muted hover:text-white" onClick={() => logout()}>
           sign out
         </button>
       </div>
     );
   }
 
+  async function sendLink(e: React.FormEvent) {
+    e.preventDefault();
+    setBusy(true);
+    setErr(null);
+    try {
+      // Always 200 (invite-only, no existence leak), so just confirm it was sent.
+      await api("/auth/request-link", { method: "POST", body: { email } });
+      setSent(true);
+    } catch {
+      setErr("Something went wrong — try again.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  if (sent) {
+    return (
+      <span className="text-sm text-muted">
+        Check your email for a sign-in link.
+      </span>
+    );
+  }
+
   return (
-    <div className="relative">
+    <form onSubmit={sendLink} className="flex items-center gap-2">
+      <input
+        type="email"
+        required
+        value={email}
+        onChange={(e) => setEmail(e.target.value)}
+        placeholder="you@email.com"
+        className="bg-ink border border-line rounded px-2 py-1 text-sm w-44"
+      />
       <button
-        className="text-sm px-3 py-1.5 rounded bg-panel border border-line hover:border-accent"
-        onClick={() => setShowLogin((s) => !s)}
+        type="submit"
+        disabled={busy}
+        className="text-sm px-3 py-1.5 rounded bg-accent disabled:opacity-50"
       >
-        sign in
+        {busy ? "…" : "Email me a link"}
       </button>
-      {showLogin && (
-        <div className="absolute right-0 mt-2 w-80 bg-panel border border-line rounded p-4 z-50 shadow-xl">
-          <div className="mb-3">
-            <div className="text-xs uppercase text-muted mb-1">Use existing user id</div>
-            <div className="flex gap-2">
-              <input
-                className="flex-1 bg-ink border border-line rounded px-2 py-1 text-sm"
-                placeholder="uuid"
-                value={uid}
-                onChange={(e) => setUid(e.target.value)}
-              />
-              <button
-                className="text-sm px-2 py-1 rounded bg-accent"
-                onClick={() => {
-                  if (uid.trim()) {
-                    setUserId(uid.trim());
-                    setShowLogin(false);
-                  }
-                }}
-              >
-                use
-              </button>
-            </div>
-          </div>
-          <div className="border-t border-line my-3" />
-          <form onSubmit={signup}>
-            <div className="text-xs uppercase text-muted mb-1">Or sign up</div>
-            <input
-              className="w-full bg-ink border border-line rounded px-2 py-1 text-sm mb-2"
-              placeholder="username"
-              value={signupName}
-              onChange={(e) => setSignupName(e.target.value)}
-            />
-            <input
-              className="w-full bg-ink border border-line rounded px-2 py-1 text-sm mb-2"
-              placeholder="email"
-              type="email"
-              value={signupEmail}
-              onChange={(e) => setSignupEmail(e.target.value)}
-            />
-            <button
-              type="submit"
-              className="w-full text-sm px-3 py-1.5 rounded bg-accent"
-            >
-              create account
-            </button>
-            {err && <div className="text-red-400 text-xs mt-2">{err}</div>}
-          </form>
-        </div>
-      )}
-    </div>
+      {err && <span className="text-red-400 text-xs">{err}</span>}
+    </form>
   );
 }
 

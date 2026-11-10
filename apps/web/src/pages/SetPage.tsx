@@ -21,7 +21,7 @@ export function SetPage() {
     if (!id || !userId) return;
     setMsg(null);
     try {
-      await api(`/sets/${id}/rating`, { method: "POST", userId, body: { score } });
+      await api(`/sets/${id}/rating`, { method: "POST", body: { score } });
       setMsg("Rating saved.");
       set.refresh();
     } catch (e) {
