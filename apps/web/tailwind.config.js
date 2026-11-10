@@ -7,7 +7,7 @@ export default {
         ink: "#0a0a0b",
         panel: "#141418",
         line: "#26262e",
-        muted: "#8a8a95",
+        muted: "#9ca3af",
         accent: "#e11d48",
       },
       fontFamily: {

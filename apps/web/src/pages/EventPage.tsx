@@ -23,13 +23,17 @@ function ScorePicker({ label, value, onChange, allowNa }: {
 }) {
   return (
     <div>
-      <div className="text-xs uppercase text-muted mb-1">{label}</div>
-      <div className="flex gap-1 flex-wrap">
+      <div className="text-xs uppercase text-muted mb-1" id={`${label}-label`}>
+        {label}
+      </div>
+      <div className="flex gap-1 flex-wrap" role="group" aria-labelledby={`${label}-label`}>
         {Array.from({ length: 10 }, (_, i) => i + 1).map((n) => (
           <button
             key={n}
             type="button"
             onClick={() => onChange(n)}
+            aria-label={`${label}: ${n} out of 10`}
+            aria-pressed={value === n}
             className={`w-8 h-8 rounded text-xs border ${
               value === n
                 ? "bg-accent border-accent"
@@ -43,6 +47,8 @@ function ScorePicker({ label, value, onChange, allowNa }: {
           <button
             type="button"
             onClick={() => onChange(null)}
+            aria-label={`${label}: not applicable`}
+            aria-pressed={value === null}
             className={`px-2 h-8 rounded text-xs border ${
               value === null
                 ? "bg-accent border-accent"

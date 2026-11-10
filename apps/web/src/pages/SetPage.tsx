@@ -75,11 +75,14 @@ export function SetPage() {
           <div className="text-xs text-muted mb-3">
             Requires attendance for the event.
           </div>
-          <div className="flex gap-1 flex-wrap mb-3">
+          <div className="flex gap-1 flex-wrap mb-3" role="group" aria-label="Set rating">
             {Array.from({ length: 10 }, (_, i) => i + 1).map((n) => (
               <button
                 key={n}
+                type="button"
                 onClick={() => setScore(n)}
+                aria-label={`${n} out of 10`}
+                aria-pressed={score === n}
                 className={`w-8 h-8 rounded text-xs border ${
                   score === n
                     ? "bg-accent border-accent"
