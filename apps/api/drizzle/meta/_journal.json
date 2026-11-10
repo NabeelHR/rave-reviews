@@ -8,6 +8,13 @@
       "when": 1784673456285,
       "tag": "0000_minor_sharon_ventura",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1794005092667,
+      "tag": "0001_purple_millenium_guard",
+      "breakpoints": true
     }
   ]
 }
