@@ -111,28 +111,43 @@ export async function currentUserId(req: FastifyRequest): Promise<string | null>
 }
 
 // ---------- Middleware ----------
-// NOTE: still the iteration-1 header stubs — the next commit makes these
-// dual-accept (session cookie OR legacy header).
 
-export async function requireUser(req: FastifyRequest, reply: FastifyReply) {
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+// Transition shim: prefer the session cookie; fall back to the legacy X-User-Id
+// header while the frontend migrates to cookie auth. The header path (and this
+// helper) is removed in RR-3c. The UUID guard avoids the raw header hitting a
+// uuid column and 500-ing (RR-11).
+async function resolveUserId(req: FastifyRequest): Promise<string | null> {
+  const fromSession = await currentUserId(req);
+  if (fromSession) return fromSession;
+
   const header = req.headers["x-user-id"];
-  const userId = Array.isArray(header) ? header[0] : header;
-  if (!userId) {
-    return reply.code(401).send({ error: "missing X-User-Id header" });
-  }
-  const rows = await db
+  const headerId = Array.isArray(header) ? header[0] : header;
+  if (!headerId || !UUID_RE.test(headerId)) return null;
+  const [row] = await db
     .select({ id: schema.users.id })
     .from(schema.users)
-    .where(eq(schema.users.id, userId))
+    .where(eq(schema.users.id, headerId))
     .limit(1);
-  if (rows.length === 0) {
-    return reply.code(401).send({ error: "unknown user" });
-  }
+  return row ? headerId : null;
+}
+
+export async function requireUser(req: FastifyRequest, reply: FastifyReply) {
+  const userId = await resolveUserId(req);
+  if (!userId) return reply.code(401).send({ error: "authentication required" });
   req.userId = userId;
 }
 
 export async function requireAdmin(req: FastifyRequest, reply: FastifyReply) {
-  const header = req.headers["x-admin"];
-  const val = Array.isArray(header) ? header[0] : header;
-  if (val !== "true") return reply.code(403).send({ error: "admin required" });
+  const userId = await resolveUserId(req);
+  if (!userId) return reply.code(401).send({ error: "authentication required" });
+  // Admin via the ADMIN_IDS allowlist, or the legacy X-Admin header during the
+  // transition (removed in RR-3c).
+  const h = req.headers["x-admin"];
+  const legacyAdmin = (Array.isArray(h) ? h[0] : h) === "true";
+  if (!isAdmin(userId) && !legacyAdmin) {
+    return reply.code(403).send({ error: "admin required" });
+  }
+  req.userId = userId;
 }
