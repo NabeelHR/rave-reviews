@@ -1,6 +1,7 @@
 import { Route, Routes } from "react-router-dom";
 import { Layout } from "./components/Layout";
 import { ArtistPage } from "./pages/ArtistPage";
+import { CallbackPage } from "./pages/CallbackPage";
 import { DiscoveryPage } from "./pages/DiscoveryPage";
 import { EventPage } from "./pages/EventPage";
 import { MePage } from "./pages/MePage";
@@ -13,6 +14,7 @@ export function App() {
     <Routes>
       <Route element={<Layout />}>
         <Route index element={<DiscoveryPage />} />
+        <Route path="auth/callback" element={<CallbackPage />} />
         <Route path="events/:id" element={<EventPage />} />
         <Route path="venues/:id" element={<VenuePage />} />
         <Route path="artists/:id" element={<ArtistPage />} />
