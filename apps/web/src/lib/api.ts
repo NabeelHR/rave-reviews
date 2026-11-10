@@ -1,7 +1,9 @@
 // Thin fetch wrapper. Auth rides on the session cookie (sent via
 // `credentials: "include"`), so callers no longer inject identity headers.
 
-const BASE = "/api/v1";
+// Dev: "/api/v1" goes through the Vite proxy to the API. Prod: the API serves the
+// SPA same-origin, so we hit "/v1" directly (set VITE_API_BASE=/v1 at build time).
+const BASE = import.meta.env.VITE_API_BASE ?? "/api/v1";
 
 export class ApiError extends Error {
   constructor(
