@@ -1,7 +1,7 @@
 import { and, asc, desc, eq, exists, gte, ilike, inArray, lte, sql } from "drizzle-orm";
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
-import { aggregateEvent } from "../aggregation/index.js";
+import { aggregateEvent, type ReviewRow } from "../aggregation/index.js";
 import { requireAdmin } from "../auth.js";
 import { db, schema } from "../db/client.js";
 
@@ -79,7 +79,34 @@ export function eventRoutes(app: FastifyInstance) {
       .where(conds.length ? and(...conds) : undefined)
       .orderBy(q.status === "past" ? desc(schema.events.startsAt) : asc(schema.events.startsAt))
       .limit(q.limit);
-    return reply.send({ events: rows });
+
+    // Attach each event's overall score + review count for the discovery cards.
+    // One batched query over the listed events, grouped, then the shared
+    // aggregation (compute-on-read) — no N+1.
+    const ids = rows.map((e) => e.id);
+    const reviewRows = ids.length
+      ? await db
+          .select({
+            eventId: schema.reviews.eventId,
+            music: schema.reviews.music,
+            crowd: schema.reviews.crowd,
+            production: schema.reviews.production,
+            venue: schema.reviews.venue,
+          })
+          .from(schema.reviews)
+          .where(inArray(schema.reviews.eventId, ids))
+      : [];
+    const byEvent = new Map<string, ReviewRow[]>();
+    for (const r of reviewRows) {
+      const arr = byEvent.get(r.eventId) ?? [];
+      arr.push(r);
+      byEvent.set(r.eventId, arr);
+    }
+    const events = rows.map((e) => {
+      const agg = aggregateEvent(byEvent.get(e.id) ?? []);
+      return { ...e, score: agg.overall, reviewCount: agg.reviewCount };
+    });
+    return reply.send({ events });
   });
 
   app.get("/events/:id", async (req, reply) => {
