@@ -9,7 +9,9 @@
     "db:migrate": "npm run db:migrate -w @rr/api",
     "db:seed": "npm run db:seed -w @rr/api",
     "test": "npm run test -w @rr/api",
-    "check": "biome check ."
+    "check": "biome check .",
+    "build": "npm run build -w @rr/web",
+    "start": "npm run db:migrate -w @rr/api && npm run db:seed -w @rr/api && npm run start -w @rr/api"
   },
   "devDependencies": {
     "@biomejs/biome": "^1.9.4",
