@@ -95,6 +95,7 @@ export function DiscoveryPage() {
         <input
           className="bg-panel border border-line rounded px-3 py-2 text-sm flex-1 min-w-64"
           placeholder="Search events…"
+          aria-label="Search events"
           value={q}
           onChange={(e) => setQ(e.target.value)}
         />
@@ -113,9 +114,11 @@ export function DiscoveryPage() {
         </div>
       </div>
 
-      {loading && <div className="text-muted">Loading…</div>}
-      {error && <div className="text-red-400">Failed to load: {error.status}</div>}
-      {data && events.length === 0 && <div className="text-muted">No events match.</div>}
+      <div role="status" aria-live="polite">
+        {loading && <div className="text-muted">Loading…</div>}
+        {error && <div className="text-red-400">Failed to load: {error.status}</div>}
+        {data && events.length === 0 && <div className="text-muted">No events match.</div>}
+      </div>
 
       {/* "all" splits into sections; a specific filter shows a single grid. */}
       {status === "" ? (
