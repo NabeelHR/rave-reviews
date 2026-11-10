@@ -6,6 +6,7 @@ import { useFetch } from "../lib/useFetch";
 
 function EventCard({ e }: { e: Event }) {
   const when = new Date(e.startsAt);
+  const isUpcoming = when.getTime() > Date.now();
   return (
     <Link
       to={`/events/${e.id}`}
@@ -22,18 +23,44 @@ function EventCard({ e }: { e: Event }) {
           </div>
           <div className="text-lg font-semibold leading-snug">{e.name}</div>
         </div>
-        {e.score != null && (
+        {e.score != null ? (
           <div className="text-accent shrink-0">
             <Score value={e.score} size="md" showMax={false} />
           </div>
-        )}
+        ) : isUpcoming ? (
+          <span className="shrink-0 text-[10px] uppercase tracking-wider text-accent border border-accent rounded px-1.5 py-0.5">
+            Upcoming
+          </span>
+        ) : null}
       </div>
       <div className="mt-3 text-xs text-muted">
         {e.reviewCount
           ? `${e.reviewCount} review${e.reviewCount === 1 ? "" : "s"}`
-          : "No reviews yet"}
+          : isUpcoming
+            ? "Upcoming show"
+            : "No reviews yet"}
       </div>
     </Link>
+  );
+}
+
+function CardGrid({ events }: { events: Event[] }) {
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      {events.map((e) => (
+        <EventCard key={e.id} e={e} />
+      ))}
+    </div>
+  );
+}
+
+function Section({ title, events }: { title: string; events: Event[] }) {
+  if (events.length === 0) return null;
+  return (
+    <section className="mb-10">
+      <h2 className="text-sm uppercase tracking-wider text-muted mb-3">{title}</h2>
+      <CardGrid events={events} />
+    </section>
   );
 }
 
@@ -45,6 +72,15 @@ export function DiscoveryPage() {
     { status: status || undefined, q: q || undefined, limit: 50 },
     [status, q],
   );
+
+  const now = Date.now();
+  const events = data?.events ?? [];
+  const upcoming = events
+    .filter((e) => new Date(e.startsAt).getTime() >= now)
+    .sort((a, b) => +new Date(a.startsAt) - +new Date(b.startsAt)); // soonest first
+  const past = events
+    .filter((e) => new Date(e.startsAt).getTime() < now)
+    .sort((a, b) => +new Date(b.startsAt) - +new Date(a.startsAt)); // most recent first
 
   return (
     <div>
@@ -79,15 +115,17 @@ export function DiscoveryPage() {
 
       {loading && <div className="text-muted">Loading…</div>}
       {error && <div className="text-red-400">Failed to load: {error.status}</div>}
-      {data && data.events.length === 0 && (
-        <div className="text-muted">No events match.</div>
-      )}
+      {data && events.length === 0 && <div className="text-muted">No events match.</div>}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {data?.events.map((e) => (
-          <EventCard key={e.id} e={e} />
-        ))}
-      </div>
+      {/* "all" splits into sections; a specific filter shows a single grid. */}
+      {status === "" ? (
+        <>
+          <Section title="Upcoming" events={upcoming} />
+          <Section title="Past" events={past} />
+        </>
+      ) : (
+        <CardGrid events={events} />
+      )}
     </div>
   );
 }
