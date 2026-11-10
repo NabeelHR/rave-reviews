@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { BigScore, ScoreBars } from "../components/ScoreBars";
+import { DimensionScores, Score } from "../components/Score";
+import { ScoreBars } from "../components/ScoreBars";
 import { api, ApiError } from "../lib/api";
 import type { EventAggregate, Review, SetRow, Venue } from "../lib/api";
 import { useFetch } from "../lib/useFetch";
@@ -14,7 +15,7 @@ type EventDetail = {
 
 type ReviewWithAuthor = Review & { username: string };
 
-function Score({ label, value, onChange, allowNa }: {
+function ScorePicker({ label, value, onChange, allowNa }: {
   label: string;
   value: number | null;
   onChange: (v: number | null) => void;
@@ -141,10 +142,10 @@ function ReviewForm({
           </span>
         )}
       </div>
-      <Score label="Music" value={music} onChange={setMusic} />
-      <Score label="Crowd" value={crowd} onChange={setCrowd} />
-      <Score label="Production" value={production} onChange={setProduction} allowNa />
-      <Score label="Venue" value={venue} onChange={setVenue} />
+      <ScorePicker label="Music" value={music} onChange={setMusic} />
+      <ScorePicker label="Crowd" value={crowd} onChange={setCrowd} />
+      <ScorePicker label="Production" value={production} onChange={setProduction} allowNa />
+      <ScorePicker label="Venue" value={venue} onChange={setVenue} />
       <div>
         <div className="text-xs uppercase text-muted mb-1">Notes</div>
         <textarea
@@ -229,7 +230,7 @@ export function EventPage() {
         <div className="bg-panel border border-line rounded-lg p-5">
           <div className="flex items-center justify-between mb-4">
             <div>
-              <BigScore value={aggregate.overall} />
+              <Score value={aggregate.overall} size="lg" />
               <div className="text-xs text-muted mt-1">
                 {aggregate.reviewCount} review{aggregate.reviewCount === 1 ? "" : "s"}
               </div>
@@ -309,11 +310,8 @@ export function EventPage() {
                     {new Date(r.updatedAt).toLocaleDateString()}
                   </span>
                 </div>
-                <div className="flex gap-4 text-xs text-muted mb-2">
-                  <span>M {r.music}</span>
-                  <span>C {r.crowd}</span>
-                  <span>P {r.production ?? "N/A"}</span>
-                  <span>V {r.venue}</span>
+                <div className="mb-2">
+                  <DimensionScores dims={r} />
                 </div>
                 {r.text && <div className="text-sm">{r.text}</div>}
               </div>

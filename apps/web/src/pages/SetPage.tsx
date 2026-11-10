@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link, useParams } from "react-router-dom";
+import { Score } from "../components/Score";
 import { api, ApiError } from "../lib/api";
 import { useFetch } from "../lib/useFetch";
 import { useUser } from "../lib/user";
@@ -65,12 +66,7 @@ export function SetPage() {
         <div className="text-sm text-muted mb-2">
           {set.data.rating.count} rating{set.data.rating.count === 1 ? "" : "s"}
         </div>
-        <div className="text-3xl font-bold">
-          {set.data.rating.average == null
-            ? "—"
-            : set.data.rating.average.toFixed(1)}
-          <span className="text-muted text-sm font-normal"> / 10</span>
-        </div>
+        <Score value={set.data.rating.average} size="lg" />
       </div>
 
       {userId && (

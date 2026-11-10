@@ -1,5 +1,6 @@
 import { Link, useParams } from "react-router-dom";
-import { BigScore, ScoreBars } from "../components/ScoreBars";
+import { Score } from "../components/Score";
+import { ScoreBars } from "../components/ScoreBars";
 import type { Artist, ArtistScore } from "../lib/api";
 import { useFetch } from "../lib/useFetch";
 
@@ -38,7 +39,7 @@ export function ArtistPage() {
       </div>
 
       <div className="bg-panel border border-line rounded-lg p-5">
-        <BigScore value={score.score} />
+        <Score value={score.score} size="lg" />
         <div className="mt-4">
           <ScoreBars dims={score.breakdown} />
         </div>
