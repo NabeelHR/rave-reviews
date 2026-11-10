@@ -1,7 +1,7 @@
 import { desc, eq, sql } from "drizzle-orm";
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
-import { requireUser } from "../auth.js";
+import { isAdmin, requireUser } from "../auth.js";
 import { db, schema } from "../db/client.js";
 
 const idParams = z.object({ id: z.string().uuid() });
@@ -16,7 +16,8 @@ export function userRoutes(app: FastifyInstance) {
       .from(schema.users)
       .where(eq(schema.users.id, req.userId as string))
       .limit(1);
-    return reply.send({ user });
+    if (!user) return reply.code(401).send({ error: "authentication required" });
+    return reply.send({ user: { ...user, isAdmin: isAdmin(user.id) } });
   });
 
   app.get("/users/me/reviews", { preHandler: requireUser }, async (req, reply) => {
