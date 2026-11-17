@@ -23,6 +23,17 @@ type EventDef = {
 };
 
 async function main() {
+  // Destructive: wipes every table before reseeding. Refuse to run against a
+  // production database unless explicitly forced — a deploy/restart must never
+  // erase real users and reviews (RR-34).
+  if (process.env.NODE_ENV === "production" && process.env.SEED_DEMO !== "true") {
+    console.error(
+      "Refusing to seed: NODE_ENV=production and the seed is wipe-and-reseed.\n" +
+        "Set SEED_DEMO=true to force (this DELETES all existing data).",
+    );
+    process.exit(1);
+  }
+
   console.log("wiping…");
   await db.delete(schema.setRatings);
   await db.delete(schema.reviews);
