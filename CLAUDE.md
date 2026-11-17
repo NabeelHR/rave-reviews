@@ -32,7 +32,12 @@ snapshot — do not use).
 **PR ↔ task convention:** every change lands via PR from a branch (never commit to
 main), and every PR references its task:
 
-- **Branch:** `rr-<N>-<slug>` — e.g. `rr-2-wire-pages`.
+- **Branch:** `rr-<N>-<slug>` — e.g. `rr-2-wire-pages`. **ENFORCED — this is the
+  only allowed branch-name shape.** No `docs/...`, `feat/...`, `fix/...`, or any
+  other prefix, for any kind of change (docs and meta/workflow changes included).
+  Since `<N>` comes from the task, an RR issue must exist **before the branch is
+  cut** — if no task covers the work, file one first, then branch. A branch name
+  without `rr-<N>` is the signal that this step was skipped.
 - **PR title:** `RR-<N> <type>(<scope>): <summary>` — the `RR-<N>` comes **first**, and
   `(<scope>)` is **required**. e.g. `RR-2 feat(web): wire profile pages`.
 - **PR body + commit trailer:** include `Closes #<issue>` using the **GitHub issue
@@ -43,6 +48,23 @@ workflow moves the card to Done — no manual status change needed. `RR-<N>` is 
 human task label (in the title); `#<issue>` is the GitHub link (in the body, for
 automation). The two numbering systems differ: `RR-<N>` is the stable task ID, while
 `#<n>` is GitHub's shared counter across *both* issues and PRs — they do not line up.
+
+**Commit convention (applies to every PR, no exceptions — docs and meta changes
+included):** build each branch as a sequence of **small, logical commits that tell a
+reviewable story** — e.g. schema → seam → endpoints → tests → docs, or
+tests-first → behavior change → cleanup. Never one squashed blob. Review happens
+commit-by-commit, so:
+
+- Each commit is **one coherent concern** with a message saying what and why.
+- Each commit **stands alone green** — typecheck and tests pass at every commit,
+  not just at the tip (order commits so this holds, e.g. migrate tests to the new
+  contract *before* removing the old one).
+- Commit **as you complete each step** — don't batch everything and carve it up at
+  the end. If uncommitted work has piled up anyway, split it into logical commits
+  (`git reset --soft <base>`, then stage and commit in order) *before* opening the PR.
+- The branch's **final commit** carries the `Closes #<issue>` trailer.
+- Keep the PRs themselves small too — split oversized tasks the way RR-3 became
+  RR-3a/b/c (expand/contract).
 
 ## Stack (decided)
 
