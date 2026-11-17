@@ -14,10 +14,6 @@ import { clearSessionCookie, readSessionCookie, setSessionCookie } from "../cook
 import { db, schema } from "../db/client.js";
 import { sendEmail } from "../email.js";
 
-const signupBody = z.object({
-  username: z.string().min(1).max(64),
-  email: z.string().email(),
-});
 const requestLinkBody = z.object({ email: z.string().email() });
 const callbackBody = z.object({ token: z.string().min(1) });
 
@@ -26,19 +22,6 @@ const callbackBody = z.object({ token: z.string().min(1) });
 const appUrl = process.env.APP_URL ?? "http://localhost:5173";
 
 export function authRoutes(app: FastifyInstance) {
-  // Kept during the RR-3 transition so the existing frontend keeps working.
-  // Removed in RR-3c once magic-link login is the only path.
-  app.post("/auth/signup", async (req, reply) => {
-    const body = signupBody.parse(req.body);
-    try {
-      const [row] = await db.insert(schema.users).values(body).returning();
-      return reply.code(201).send({ user: row });
-    } catch (err) {
-      req.log.warn({ err }, "signup conflict");
-      return reply.code(409).send({ error: "username or email taken" });
-    }
-  });
-
   // Passwordless login, step 1: request a magic link.
   // Invite-only — a link is only minted for an email that already has a user.
   // Always returns 200 so the endpoint can't be used to probe which emails exist.

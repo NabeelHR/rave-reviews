@@ -176,6 +176,15 @@ describe("legacy header stubs are retired (RR-3c)", () => {
     });
     expect(res.statusCode).toBe(403);
   });
+
+  it("removed /auth/signup", async () => {
+    const res = await app.inject({
+      method: "POST",
+      url: "/v1/auth/signup",
+      payload: { username: "x", email: "x@x.io" },
+    });
+    expect(res.statusCode).toBe(404);
+  });
 });
 
 describe("logout", () => {
