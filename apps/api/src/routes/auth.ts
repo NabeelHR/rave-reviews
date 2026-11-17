@@ -1,4 +1,4 @@
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
 import {
@@ -28,10 +28,12 @@ export function authRoutes(app: FastifyInstance) {
   app.post("/auth/request-link", async (req, reply) => {
     const { email } = requestLinkBody.parse(req.body);
 
+    // Case-insensitive match on both sides — a user stored with mixed-case
+    // email must still be able to log in (RR-3c lockout fix).
     const [user] = await db
       .select({ id: schema.users.id })
       .from(schema.users)
-      .where(eq(schema.users.email, email.toLowerCase()))
+      .where(sql`lower(${schema.users.email}) = ${email.toLowerCase()}`)
       .limit(1);
 
     if (user) {

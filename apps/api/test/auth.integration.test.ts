@@ -187,6 +187,24 @@ describe("legacy header stubs are retired (RR-3c)", () => {
   });
 });
 
+describe("email case normalization", () => {
+  it("mints a token regardless of stored/submitted email case", async () => {
+    await db
+      .update(schema.users)
+      .set({ email: "Mixed.Case@X.io" })
+      .where(eq(schema.users.id, plainId));
+    const res = await app.inject({
+      method: "POST",
+      url: "/v1/auth/request-link",
+      payload: { email: "mixed.case@x.IO" },
+    });
+    expect(res.statusCode).toBe(200);
+    const tokens = await db.select().from(schema.loginTokens);
+    expect(tokens).toHaveLength(1);
+    expect(tokens[0]!.userId).toBe(plainId);
+  });
+});
+
 describe("logout", () => {
   it("destroys the session", async () => {
     const token = await createLoginToken(plainId);
