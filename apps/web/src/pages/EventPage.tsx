@@ -15,9 +15,10 @@ type EventDetail = {
 
 type ReviewWithAuthor = Review & { username: string };
 
+// `undefined` = not yet chosen (invalid); `null` = explicit N/A (allowNa only).
 function ScorePicker({ label, value, onChange, allowNa }: {
   label: string;
-  value: number | null;
+  value: number | null | undefined;
   onChange: (v: number | null) => void;
   allowNa?: boolean;
 }) {
@@ -75,12 +76,14 @@ function ReviewForm({
   onCancel?: () => void;
 }) {
   const { userId } = useUser();
-  const [music, setMusic] = useState<number | null>(existing?.music ?? 8);
-  const [crowd, setCrowd] = useState<number | null>(existing?.crowd ?? 8);
-  const [production, setProduction] = useState<number | null>(
-    existing ? existing.production : 8,
+  // No pre-filled defaults (RR-24): every score starts unchosen so a submitted
+  // review always reflects deliberate input, not an anchored 8.
+  const [music, setMusic] = useState<number | null>(existing?.music ?? null);
+  const [crowd, setCrowd] = useState<number | null>(existing?.crowd ?? null);
+  const [production, setProduction] = useState<number | null | undefined>(
+    existing ? existing.production : undefined,
   );
-  const [venue, setVenue] = useState<number | null>(existing?.venue ?? 8);
+  const [venue, setVenue] = useState<number | null>(existing?.venue ?? null);
   const [text, setText] = useState(existing?.text ?? "");
   const [err, setErr] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -89,7 +92,9 @@ function ReviewForm({
     return <div className="text-muted text-sm">Sign in to leave a review.</div>;
   }
 
-  const invalid = music == null || crowd == null || venue == null;
+  // Production may be an explicit N/A (null) but must still be chosen.
+  const invalid =
+    music == null || crowd == null || venue == null || production === undefined;
   const editing = !!existing;
 
   async function submit(e: React.FormEvent) {
@@ -98,21 +103,16 @@ function ReviewForm({
     setBusy(true);
     setErr(null);
     try {
+      const scores = { music, crowd, production: production ?? null, venue };
       if (editing) {
         await api(`/reviews/${existing!.id}`, {
           method: "PATCH",
-          body: {
-            scores: { music, crowd, production, venue },
-            text: text || null,
-          },
+          body: { scores, text: text || null },
         });
       } else {
         await api(`/events/${eventId}/reviews`, {
           method: "POST",
-          body: {
-            scores: { music, crowd, production, venue },
-            text: text || undefined,
-          },
+          body: { scores, text: text || undefined },
         });
       }
       onDone();
@@ -164,6 +164,11 @@ function ReviewForm({
         />
       </div>
       {err && <div className="text-red-400 text-sm">{err}</div>}
+      {invalid && (
+        <div className="text-xs text-muted">
+          Score every dimension to submit — Production can be N/A.
+        </div>
+      )}
       <div className="flex gap-2">
         <button
           type="submit"
