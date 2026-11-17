@@ -206,6 +206,17 @@ describe("email case normalization", () => {
 });
 
 describe("logout", () => {
+  it("clears the cookie even without a valid session", async () => {
+    const res = await app.inject({
+      method: "POST",
+      url: "/v1/auth/logout",
+      headers: { cookie: "rr_session=stale-or-garbage" },
+    });
+    expect(res.statusCode).toBe(204);
+    const setCookie = cookieFrom(res.headers["set-cookie"]);
+    expect(setCookie).toBe("rr_session=");
+  });
+
   it("destroys the session", async () => {
     const token = await createLoginToken(plainId);
     const cb = await app.inject({ method: "POST", url: "/v1/auth/callback", payload: { token } });

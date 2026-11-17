@@ -2,13 +2,12 @@ import { eq, sql } from "drizzle-orm";
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
 import {
+  SESSION_MAX_AGE_SECONDS,
   consumeLoginToken,
   createLoginToken,
   createSession,
   destroySession,
   isAdmin,
-  requireUser,
-  SESSION_MAX_AGE_SECONDS,
 } from "../auth.js";
 import { clearSessionCookie, readSessionCookie, setSessionCookie } from "../cookies.js";
 import { db, schema } from "../db/client.js";
@@ -67,7 +66,9 @@ export function authRoutes(app: FastifyInstance) {
     return reply.send({ user: { ...user, isAdmin: isAdmin(userId) } });
   });
 
-  app.post("/auth/logout", { preHandler: requireUser }, async (req, reply) => {
+  // No auth requirement: logout must work even with an expired/invalid session,
+  // and the cookie is cleared unconditionally so the client never gets stuck.
+  app.post("/auth/logout", async (req, reply) => {
     const token = readSessionCookie(req);
     if (token) await destroySession(token);
     clearSessionCookie(reply);
