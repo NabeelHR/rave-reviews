@@ -42,22 +42,6 @@ human task label (in the title); `#<issue>` is the GitHub link (in the body, for
 automation). The two numbering systems differ: `RR-<N>` is the stable task ID, while
 `#<n>` is GitHub's shared counter across *both* issues and PRs — they do not line up.
 
-**Commit convention (applies to every PR, no exceptions):** build each branch as a
-sequence of **small, logical commits that tell a reviewable story** — e.g.
-schema → seam → endpoints → tests → docs, or tests-first → behavior change → cleanup.
-Never one squashed blob. Review happens commit-by-commit, so:
-
-- Each commit is **one coherent concern** with a message saying what and why.
-- Each commit **stands alone green** — typecheck and tests pass at every commit,
-  not just at the tip (order commits so this holds, e.g. migrate tests to the new
-  contract *before* removing the old one).
-- Commit **as you complete each step** — don't batch everything and carve it up at
-  the end. If uncommitted work has piled up anyway, split it into logical commits
-  (`git reset --soft <base>`, then stage and commit in order) *before* opening the PR.
-- The branch's **final commit** carries the `Closes #<issue>` trailer.
-- Keep the PRs themselves small too — split oversized tasks the way RR-3 became
-  RR-3a/b/c (expand/contract).
-
 ## Stack (decided)
 
 - **Frontend:** React + TypeScript
