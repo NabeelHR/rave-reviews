@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it } from "vitest";
-import { initEmailFromEnv, resendTransport } from "../src/email.js";
+import { gmailTransport, initEmailFromEnv, resendTransport } from "../src/email.js";
+import type { SmtpMailer } from "../src/email.js";
 
 // Unit tests — no network, no DB. The fetch is injected.
 
@@ -39,21 +40,70 @@ describe("resendTransport", () => {
   });
 });
 
+describe("gmailTransport", () => {
+  it("sends via the injected SMTP mailer with a friendly from", async () => {
+    const calls: Parameters<SmtpMailer["sendMail"]>[0][] = [];
+    const mailer: SmtpMailer = {
+      async sendMail(opts) {
+        calls.push(opts);
+      },
+    };
+    const t = gmailTransport("nabeel@gmail.com", "app-password", mailer);
+    await t.send({ to: "friend@x.io", subject: "hi", text: "link here" });
+
+    expect(calls).toEqual([
+      {
+        from: "Rave Reviews <nabeel@gmail.com>",
+        to: "friend@x.io",
+        subject: "hi",
+        text: "link here",
+      },
+    ]);
+  });
+
+  it("propagates SMTP failures so they are visible", async () => {
+    const mailer: SmtpMailer = {
+      async sendMail() {
+        throw new Error("535 bad credentials");
+      },
+    };
+    const t = gmailTransport("u@gmail.com", "wrong", mailer);
+    await expect(t.send({ to: "a@x.io", subject: "s", text: "t" })).rejects.toThrow(/535/);
+  });
+});
+
 describe("initEmailFromEnv", () => {
   afterEach(() => {
     delete process.env.RESEND_API_KEY;
     delete process.env.EMAIL_FROM;
+    delete process.env.GMAIL_USER;
+    delete process.env.GMAIL_APP_PASSWORD;
     initEmailFromEnv(); // restore the console default for other tests
   });
 
-  it("selects Resend when both env vars are set", () => {
+  it("selects Resend when both resend vars are set", () => {
     process.env.RESEND_API_KEY = "key";
     process.env.EMAIL_FROM = "login@rave.reviews";
     expect(initEmailFromEnv()).toMatch(/^resend/);
   });
 
-  it("falls back to console when either var is missing", () => {
+  it("selects Gmail SMTP when gmail vars are set and resend is not", () => {
+    process.env.GMAIL_USER = "nabeel@gmail.com";
+    process.env.GMAIL_APP_PASSWORD = "app-password";
+    expect(initEmailFromEnv()).toMatch(/^gmail smtp/);
+  });
+
+  it("prefers Resend over Gmail when both are configured", () => {
     process.env.RESEND_API_KEY = "key";
+    process.env.EMAIL_FROM = "login@rave.reviews";
+    process.env.GMAIL_USER = "nabeel@gmail.com";
+    process.env.GMAIL_APP_PASSWORD = "app-password";
+    expect(initEmailFromEnv()).toMatch(/^resend/);
+  });
+
+  it("falls back to console when configs are incomplete", () => {
+    process.env.RESEND_API_KEY = "key"; // missing EMAIL_FROM
+    process.env.GMAIL_USER = "nabeel@gmail.com"; // missing GMAIL_APP_PASSWORD
     expect(initEmailFromEnv()).toMatch(/^console/);
   });
 });
