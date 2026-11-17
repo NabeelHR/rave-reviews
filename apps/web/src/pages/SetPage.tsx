@@ -15,11 +15,12 @@ export function SetPage() {
   const { id } = useParams<{ id: string }>();
   const { userId } = useUser();
   const set = useFetch<SetResp>(id ? `/sets/${id}` : null);
-  const [score, setScore] = useState(8);
+  // No pre-filled default (RR-24): the score starts unchosen.
+  const [score, setScore] = useState<number | null>(null);
   const [msg, setMsg] = useState<string | null>(null);
 
   async function rate() {
-    if (!id || !userId) return;
+    if (!id || !userId || score == null) return;
     setMsg(null);
     try {
       await api(`/sets/${id}/rating`, { method: "POST", body: { score } });
@@ -95,7 +96,8 @@ export function SetPage() {
           </div>
           <button
             onClick={rate}
-            className="px-4 py-2 rounded bg-accent text-sm font-medium"
+            disabled={score == null}
+            className="px-4 py-2 rounded bg-accent disabled:opacity-50 text-sm font-medium"
           >
             Save rating
           </button>
