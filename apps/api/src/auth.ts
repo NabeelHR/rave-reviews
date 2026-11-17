@@ -5,9 +5,8 @@ import { readSessionCookie } from "./cookies.js";
 import { db, schema } from "./db/client.js";
 
 // RR-3 auth: passwordless magic-link login backed by server-side sessions.
-// Identity is proven by a session cookie. During the RR-3 transition the legacy
-// X-User-Id / X-Admin headers are still accepted by the middleware below; those
-// shims are removed in RR-3c once the frontend uses cookies.
+// Identity is proven by a session cookie — the only accepted credential. (The
+// legacy X-User-Id / X-Admin header shims were removed in RR-3c.)
 declare module "fastify" {
   interface FastifyRequest {
     userId?: string;
@@ -112,41 +111,16 @@ export async function currentUserId(req: FastifyRequest): Promise<string | null>
 
 // ---------- Middleware ----------
 
-const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-
-// Transition shim: prefer the session cookie; fall back to the legacy X-User-Id
-// header while the frontend migrates to cookie auth. The header path (and this
-// helper) is removed in RR-3c. The UUID guard avoids the raw header hitting a
-// uuid column and 500-ing (RR-11).
-async function resolveUserId(req: FastifyRequest): Promise<string | null> {
-  const fromSession = await currentUserId(req);
-  if (fromSession) return fromSession;
-
-  const header = req.headers["x-user-id"];
-  const headerId = Array.isArray(header) ? header[0] : header;
-  if (!headerId || !UUID_RE.test(headerId)) return null;
-  const [row] = await db
-    .select({ id: schema.users.id })
-    .from(schema.users)
-    .where(eq(schema.users.id, headerId))
-    .limit(1);
-  return row ? headerId : null;
-}
-
 export async function requireUser(req: FastifyRequest, reply: FastifyReply) {
-  const userId = await resolveUserId(req);
+  const userId = await currentUserId(req);
   if (!userId) return reply.code(401).send({ error: "authentication required" });
   req.userId = userId;
 }
 
 export async function requireAdmin(req: FastifyRequest, reply: FastifyReply) {
-  const userId = await resolveUserId(req);
+  const userId = await currentUserId(req);
   if (!userId) return reply.code(401).send({ error: "authentication required" });
-  // Admin via the ADMIN_IDS allowlist, or the legacy X-Admin header during the
-  // transition (removed in RR-3c).
-  const h = req.headers["x-admin"];
-  const legacyAdmin = (Array.isArray(h) ? h[0] : h) === "true";
-  if (!isAdmin(userId) && !legacyAdmin) {
+  if (!isAdmin(userId)) {
     return reply.code(403).send({ error: "admin required" });
   }
   req.userId = userId;

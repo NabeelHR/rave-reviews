@@ -16,7 +16,7 @@ iteration 2.
   - `POST /events/:id/attendance` / `DELETE /events/:id/attendance`.
   - `GET /events/:id` — event detail + lineup + compute-on-read aggregate.
   - `GET /artists/:id` — blended artist score + breakdown.
-- Auth stub (`X-User-Id` header) — real auth lands with the frontend.
+- Passwordless auth — magic-link login backed by server-side sessions (cookie).
 - Vancouver seed data.
 - Unit tests for the aggregation module + integration tests for the write path.
 
@@ -61,12 +61,12 @@ npm test                          # unit tests (aggregation)
 npm run test:integration -w @rr/api   # integration tests (require DB up + migrated)
 ```
 
-## Auth stub
+## Auth
 
-Every authenticated endpoint reads `X-User-Id`. The seed script prints valid
-user IDs; pass one as the header:
+Passwordless magic-link login; identity is a session cookie (`rr_session`).
+Invite-only: a link is only minted for an email that already has a user row
+(seeded or provisioned). In dev the "email" is printed to the API server log
+(console transport) — request a link from the web UI, copy it from the log.
 
-```bash
-curl -X POST localhost:3000/events/<eventId>/attendance \
-  -H "X-User-Id: <userId>"
-```
+Admin is a server-side allowlist: set `ADMIN_IDS` to a comma-separated list of
+user UUIDs in `.env`. There is no client-side way to claim admin.

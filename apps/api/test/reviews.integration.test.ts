@@ -1,5 +1,7 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { buildApp } from "../src/app.js";
+import { createSession } from "../src/auth.js";
+import { SESSION_COOKIE } from "../src/cookies.js";
 import { db, schema, sqlClient } from "../src/db/client.js";
 
 // Integration tests. Require a running Postgres reachable via DATABASE_URL and
@@ -13,6 +15,11 @@ const userB = "00000000-0000-0000-0000-000000000002";
 let venueId: string;
 let eventId: string;
 let setId: string;
+
+// Session-cookie auth (the only credential since RR-3c).
+async function authed(userId: string): Promise<{ cookie: string }> {
+  return { cookie: `${SESSION_COOKIE}=${await createSession(userId)}` };
+}
 
 async function wipe() {
   await db.delete(schema.setRatings);
@@ -62,27 +69,29 @@ beforeEach(async () => {
 
 describe("POST /events/:id/reviews", () => {
   it("creates a review with no set ratings, no attendance required", async () => {
+    const headers = await authed(userA);
     const res = await app.inject({
       method: "POST",
       url: `/v1/events/${eventId}/reviews`,
-      headers: { "x-user-id": userA },
+      headers,
       payload: { scores: { music: 8, crowd: 7, production: 9, venue: 6 } },
     });
     expect(res.statusCode).toBe(201);
   });
 
   it("upserts on the (user, event) unique constraint (edit = update)", async () => {
+    const headers = await authed(userA);
     const first = await app.inject({
       method: "POST",
       url: `/v1/events/${eventId}/reviews`,
-      headers: { "x-user-id": userA },
+      headers,
       payload: { scores: { music: 5, crowd: 5, production: 5, venue: 5 } },
     });
     expect(first.statusCode).toBe(201);
     const second = await app.inject({
       method: "POST",
       url: `/v1/events/${eventId}/reviews`,
-      headers: { "x-user-id": userA },
+      headers,
       payload: { scores: { music: 9, crowd: 9, production: 9, venue: 9 } },
     });
     expect(second.statusCode).toBe(201);
@@ -95,10 +104,11 @@ describe("POST /events/:id/reviews", () => {
   });
 
   it("rejects set ratings when the user has no attendance record", async () => {
+    const headers = await authed(userA);
     const res = await app.inject({
       method: "POST",
       url: `/v1/events/${eventId}/reviews`,
-      headers: { "x-user-id": userA },
+      headers,
       payload: {
         scores: { music: 8, crowd: 8, production: 8, venue: 8 },
         setRatings: [{ setId, score: 9 }],
@@ -108,17 +118,18 @@ describe("POST /events/:id/reviews", () => {
   });
 
   it("accepts set ratings once attendance exists", async () => {
+    const headers = await authed(userA);
     const attend = await app.inject({
       method: "POST",
       url: `/v1/events/${eventId}/attendance`,
-      headers: { "x-user-id": userA },
+      headers,
     });
     expect(attend.statusCode).toBe(201);
 
     const res = await app.inject({
       method: "POST",
       url: `/v1/events/${eventId}/reviews`,
-      headers: { "x-user-id": userA },
+      headers,
       payload: {
         scores: { music: 8, crowd: 8, production: null, venue: 8 },
         setRatings: [{ setId, score: 9 }],

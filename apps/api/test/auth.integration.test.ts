@@ -145,7 +145,78 @@ describe("admin allowlist", () => {
   });
 });
 
+describe("legacy header stubs are retired (RR-3c)", () => {
+  it("ignores X-User-Id — authenticated routes 401 without a session", async () => {
+    const res = await app.inject({
+      method: "GET",
+      url: "/v1/users/me",
+      headers: { "x-user-id": plainId },
+    });
+    expect(res.statusCode).toBe(401);
+  });
+
+  it("ignores a malformed X-User-Id (no 500 — RR-11)", async () => {
+    const res = await app.inject({
+      method: "GET",
+      url: "/v1/users/me",
+      headers: { "x-user-id": "not-a-uuid" },
+    });
+    expect(res.statusCode).toBe(401);
+  });
+
+  it("ignores X-Admin — a session user without allowlist still gets 403", async () => {
+    const token = await createLoginToken(plainId);
+    const cb = await app.inject({ method: "POST", url: "/v1/auth/callback", payload: { token } });
+    const cookie = cookieFrom(cb.headers["set-cookie"]);
+    const res = await app.inject({
+      method: "POST",
+      url: "/v1/venues",
+      headers: { cookie, "x-admin": "true" },
+      payload: { name: "Nope", city: "Vancouver", country: "CA" },
+    });
+    expect(res.statusCode).toBe(403);
+  });
+
+  it("removed /auth/signup", async () => {
+    const res = await app.inject({
+      method: "POST",
+      url: "/v1/auth/signup",
+      payload: { username: "x", email: "x@x.io" },
+    });
+    expect(res.statusCode).toBe(404);
+  });
+});
+
+describe("email case normalization", () => {
+  it("mints a token regardless of stored/submitted email case", async () => {
+    await db
+      .update(schema.users)
+      .set({ email: "Mixed.Case@X.io" })
+      .where(eq(schema.users.id, plainId));
+    const res = await app.inject({
+      method: "POST",
+      url: "/v1/auth/request-link",
+      payload: { email: "mixed.case@x.IO" },
+    });
+    expect(res.statusCode).toBe(200);
+    const tokens = await db.select().from(schema.loginTokens);
+    expect(tokens).toHaveLength(1);
+    expect(tokens[0]!.userId).toBe(plainId);
+  });
+});
+
 describe("logout", () => {
+  it("clears the cookie even without a valid session", async () => {
+    const res = await app.inject({
+      method: "POST",
+      url: "/v1/auth/logout",
+      headers: { cookie: "rr_session=stale-or-garbage" },
+    });
+    expect(res.statusCode).toBe(204);
+    const setCookie = cookieFrom(res.headers["set-cookie"]);
+    expect(setCookie).toBe("rr_session=");
+  });
+
   it("destroys the session", async () => {
     const token = await createLoginToken(plainId);
     const cb = await app.inject({ method: "POST", url: "/v1/auth/callback", payload: { token } });

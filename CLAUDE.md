@@ -18,9 +18,11 @@ and passing unit + integration tests — see `docs/iteration-1-status.md`. **Fro
 scaffolded** (Vite + React + Tailwind, page shells + API client under `apps/web`); the
 Discovery → Event → review-submit golden path is not yet verified end-to-end.
 
-Auth is still stubbed (`X-User-Id` / `X-Admin: true` headers); real auth is iteration 2.
-Deliberate iteration-1 deferrals (no `/v1` prefix, no cursor pagination, simple `{error}`
-JSON, no geo filter) are documented in `docs/iteration-1-status.md`.
+Auth is real as of RR-3: passwordless magic-link login with server-side sessions
+(cookie `rr_session`), invite-only, admin via the `ADMIN_IDS` env allowlist. The
+legacy `X-User-Id` / `X-Admin` header stubs were removed in RR-3c. Deliberate
+iteration-1 deferrals (no cursor pagination, simple `{error}` JSON, no geo filter)
+are documented in `docs/iteration-1-status.md`.
 
 **Work tracking:** the **GitHub Project** is the single source of truth — start
 there for what's next: <https://github.com/users/NabeelHR/projects/2> (each `RR-N`
