@@ -42,12 +42,17 @@ export function reviewRoutes(app: FastifyInstance) {
     const userId = req.userId as string;
 
     // Verify event exists (cheap; also caught by FK).
-    const event = await db
-      .select({ id: schema.events.id })
+    const [event] = await db
+      .select({ id: schema.events.id, startsAt: schema.events.startsAt })
       .from(schema.events)
       .where(eq(schema.events.id, eventId))
       .limit(1);
-    if (event.length === 0) return reply.code(404).send({ error: "event not found" });
+    if (!event) return reply.code(404).send({ error: "event not found" });
+
+    // You review *the night* — a night that hasn't happened can't be reviewed (RR-25).
+    if (event.startsAt > new Date()) {
+      return reply.code(422).send({ error: "event has not happened yet" });
+    }
 
     // If any set ratings are present, gate on attendance and validate set membership.
     if (body.setRatings.length > 0) {
