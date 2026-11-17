@@ -67,6 +67,10 @@ Passwordless magic-link login; identity is a session cookie (`rr_session`).
 Invite-only: a link is only minted for an email that already has a user row
 (seeded or provisioned). In dev the "email" is printed to the API server log
 (console transport) — request a link from the web UI, copy it from the log.
+In production, set `GMAIL_USER` + `GMAIL_APP_PASSWORD` to deliver links from
+your own Gmail (free, no domain needed), or `RESEND_API_KEY` + `EMAIL_FROM`
+for [Resend](https://resend.com) with a verified domain (takes precedence).
+With neither, the console transport is used and the boot log says so.
 
 Admin is a server-side allowlist: set `ADMIN_IDS` to a comma-separated list of
 user UUIDs in `.env`. There is no client-side way to claim admin.
