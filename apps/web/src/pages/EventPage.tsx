@@ -281,6 +281,8 @@ export function EventPage() {
 
   const { event, sets, aggregate } = detail.data;
   const when = new Date(event.startsAt);
+  // You review *the night* — reviews and attendance open once it has started (RR-25).
+  const isUpcoming = when.getTime() > Date.now();
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -314,7 +316,7 @@ export function EventPage() {
                 {aggregate.reviewCount} review{aggregate.reviewCount === 1 ? "" : "s"}
               </div>
             </div>
-            {userId && (
+            {userId && !isUpcoming && (
               <button
                 onClick={attend}
                 className="text-sm px-3 py-1.5 rounded border border-line hover:border-accent"
@@ -403,17 +405,24 @@ export function EventPage() {
       </div>
 
       <div className="lg:col-span-1">
-        {id && !reviews.loading && (
-          <ReviewPanel
-            eventId={id}
-            mine={
-              userId ? reviews.data?.reviews.find((r) => r.userId === userId) ?? null : null
-            }
-            onDone={() => {
-              detail.refresh();
-              reviews.refresh();
-            }}
-          />
+        {isUpcoming ? (
+          <div className="bg-panel border border-line rounded-lg p-5 text-sm text-muted">
+            Reviews open after the night.
+          </div>
+        ) : (
+          id &&
+          !reviews.loading && (
+            <ReviewPanel
+              eventId={id}
+              mine={
+                userId ? reviews.data?.reviews.find((r) => r.userId === userId) ?? null : null
+              }
+              onDone={() => {
+                detail.refresh();
+                reviews.refresh();
+              }}
+            />
+          )
         )}
       </div>
     </div>

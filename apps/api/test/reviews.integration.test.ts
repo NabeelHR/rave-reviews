@@ -151,6 +151,50 @@ describe("POST /events/:id/reviews", () => {
   });
 });
 
+describe("future events are not reviewable (RR-25)", () => {
+  let futureEventId: string;
+
+  beforeEach(async () => {
+    const [e] = await db
+      .insert(schema.events)
+      .values({
+        name: "Tomorrow Night",
+        venueId,
+        startsAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
+      })
+      .returning();
+    futureEventId = e!.id;
+  });
+
+  it("rejects a review for an event that hasn't started with 422", async () => {
+    const res = await app.inject({
+      method: "POST",
+      url: `/v1/events/${futureEventId}/reviews`,
+      headers: await authed(userA),
+      payload: { scores: { music: 8, crowd: 8, production: 8, venue: 8 } },
+    });
+    expect(res.statusCode).toBe(422);
+  });
+
+  it("rejects attendance for an event that hasn't started with 422", async () => {
+    const res = await app.inject({
+      method: "POST",
+      url: `/v1/events/${futureEventId}/attendance`,
+      headers: await authed(userA),
+    });
+    expect(res.statusCode).toBe(422);
+  });
+
+  it("still accepts attendance for a past event", async () => {
+    const res = await app.inject({
+      method: "POST",
+      url: `/v1/events/${eventId}/attendance`,
+      headers: await authed(userA),
+    });
+    expect(res.statusCode).toBe(201);
+  });
+});
+
 describe("GET /events/:id", () => {
   it("returns event detail with aggregate computed on read", async () => {
     await db.insert(schema.reviews).values([
