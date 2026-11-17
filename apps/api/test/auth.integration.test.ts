@@ -145,6 +145,39 @@ describe("admin allowlist", () => {
   });
 });
 
+describe("legacy header stubs are retired (RR-3c)", () => {
+  it("ignores X-User-Id — authenticated routes 401 without a session", async () => {
+    const res = await app.inject({
+      method: "GET",
+      url: "/v1/users/me",
+      headers: { "x-user-id": plainId },
+    });
+    expect(res.statusCode).toBe(401);
+  });
+
+  it("ignores a malformed X-User-Id (no 500 — RR-11)", async () => {
+    const res = await app.inject({
+      method: "GET",
+      url: "/v1/users/me",
+      headers: { "x-user-id": "not-a-uuid" },
+    });
+    expect(res.statusCode).toBe(401);
+  });
+
+  it("ignores X-Admin — a session user without allowlist still gets 403", async () => {
+    const token = await createLoginToken(plainId);
+    const cb = await app.inject({ method: "POST", url: "/v1/auth/callback", payload: { token } });
+    const cookie = cookieFrom(cb.headers["set-cookie"]);
+    const res = await app.inject({
+      method: "POST",
+      url: "/v1/venues",
+      headers: { cookie, "x-admin": "true" },
+      payload: { name: "Nope", city: "Vancouver", country: "CA" },
+    });
+    expect(res.statusCode).toBe(403);
+  });
+});
+
 describe("logout", () => {
   it("destroys the session", async () => {
     const token = await createLoginToken(plainId);
