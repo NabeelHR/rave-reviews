@@ -30,7 +30,12 @@ snapshot — do not use).
 **PR ↔ task convention:** every change lands via PR from a branch (never commit to
 main), and every PR references its task:
 
-- **Branch:** `rr-<N>-<slug>` — e.g. `rr-2-wire-pages`.
+- **Branch:** `rr-<N>-<slug>` — e.g. `rr-2-wire-pages`. **ENFORCED — this is the
+  only allowed branch-name shape.** No `docs/...`, `feat/...`, `fix/...`, or any
+  other prefix, for any kind of change (docs and meta/workflow changes included).
+  Since `<N>` comes from the task, an RR issue must exist **before the branch is
+  cut** — if no task covers the work, file one first, then branch. A branch name
+  without `rr-<N>` is the signal that this step was skipped.
 - **PR title:** `RR-<N> <type>(<scope>): <summary>` — the `RR-<N>` comes **first**, and
   `(<scope>)` is **required**. e.g. `RR-2 feat(web): wire profile pages`.
 - **PR body + commit trailer:** include `Closes #<issue>` using the **GitHub issue
