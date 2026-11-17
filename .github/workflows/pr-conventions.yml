@@ -1,0 +1,24 @@
+# Mechanical enforcement of the PR ↔ task convention (CLAUDE.md).
+# The documentation half lives in CLAUDE.md (RR-32); this catches violations at CI time.
+name: PR conventions
+
+on:
+  pull_request:
+    types: [opened, edited, synchronize, reopened]
+
+jobs:
+  branch-name:
+    name: Branch is rr-<N>-<slug>
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check head branch name
+        env:
+          HEAD_REF: ${{ github.head_ref }}
+        run: |
+          # rr-<N>-<slug>, allowing letter-suffixed task splits (rr-3a-..., per RR-3a/b/c).
+          if [[ "$HEAD_REF" =~ ^rr-[0-9]+[a-z]?-[a-z0-9-]+$ ]]; then
+            echo "ok: $HEAD_REF"
+          else
+            echo "::error::Branch '$HEAD_REF' violates the convention: branches must be named rr-<N>-<slug> (e.g. rr-2-wire-pages), which requires the RR issue to exist before the branch is cut — docs/meta changes included. See CLAUDE.md 'PR ↔ task convention'."
+            exit 1
+          fi
