@@ -96,3 +96,47 @@ describe("POST /users (admin provisioning)", () => {
     expect(res.statusCode).toBe(401);
   });
 });
+
+describe("POST /users/:id/login-link (admin)", () => {
+  it("mints a working magic link for an existing user", async () => {
+    const res = await app.inject({
+      method: "POST",
+      url: `/v1/users/${plainId}/login-link`,
+      headers: await cookie(adminId),
+    });
+    expect(res.statusCode).toBe(200);
+    const link = res.json().link as string;
+    expect(link).toContain("/auth/callback?token=");
+
+    // A token row was created, and the returned link actually logs the user in.
+    const tokens = await db.select().from(schema.loginTokens);
+    expect(tokens).toHaveLength(1);
+
+    const token = new URL(link).searchParams.get("token");
+    const cb = await app.inject({
+      method: "POST",
+      url: "/v1/auth/callback",
+      payload: { token },
+    });
+    expect(cb.statusCode).toBe(200);
+    expect(cb.json().user.id).toBe(plainId);
+  });
+
+  it("returns 404 for an unknown user", async () => {
+    const res = await app.inject({
+      method: "POST",
+      url: "/v1/users/00000000-0000-0000-0000-0000000000ff/login-link",
+      headers: await cookie(adminId),
+    });
+    expect(res.statusCode).toBe(404);
+  });
+
+  it("rejects a non-admin with 403", async () => {
+    const res = await app.inject({
+      method: "POST",
+      url: `/v1/users/${plainId}/login-link`,
+      headers: await cookie(plainId),
+    });
+    expect(res.statusCode).toBe(403);
+  });
+});

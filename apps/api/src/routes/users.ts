@@ -1,7 +1,7 @@
 import { desc, eq, sql } from "drizzle-orm";
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
-import { isAdmin, requireAdmin, requireUser } from "../auth.js";
+import { createLoginToken, isAdmin, magicLinkUrl, requireAdmin, requireUser } from "../auth.js";
 import { db, schema } from "../db/client.js";
 
 const idParams = z.object({ id: z.string().uuid() });
@@ -38,6 +38,24 @@ export function userRoutes(app: FastifyInstance) {
       req.log.warn({ err }, "create user conflict");
       return reply.code(409).send({ error: "username or email already taken" });
     }
+  });
+
+  // Admin-only: mint a magic-link for an existing user and return the URL, so an
+  // admin can hand/DM a sign-in link directly (RR-14) — a fallback for when email
+  // delivery isn't set up or a friend can't find the mail. Same single-use,
+  // short-TTL token as the emailed link; the raw token is returned only here, to
+  // the admin, never stored in the clear.
+  app.post("/users/:id/login-link", { preHandler: requireAdmin }, async (req, reply) => {
+    const { id } = idParams.parse(req.params);
+    const [user] = await db
+      .select({ id: schema.users.id })
+      .from(schema.users)
+      .where(eq(schema.users.id, id))
+      .limit(1);
+    if (!user) return reply.code(404).send({ error: "user not found" });
+
+    const token = await createLoginToken(user.id);
+    return reply.send({ link: magicLinkUrl(token) });
   });
 
   app.get("/users/me", { preHandler: requireUser }, async (req, reply) => {
