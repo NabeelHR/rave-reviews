@@ -8,6 +8,7 @@ import {
   createSession,
   destroySession,
   isAdmin,
+  magicLinkUrl,
 } from "../auth.js";
 import { clearSessionCookie, readSessionCookie, setSessionCookie } from "../cookies.js";
 import { db, schema } from "../db/client.js";
@@ -15,10 +16,6 @@ import { sendEmail } from "../email.js";
 
 const requestLinkBody = z.object({ email: z.string().email() });
 const callbackBody = z.object({ token: z.string().min(1) });
-
-// Where the magic link sends the user — the frontend callback route. The link must
-// land on the app origin so the session cookie is scoped there (incl. via the dev proxy).
-const appUrl = process.env.APP_URL ?? "http://localhost:5173";
 
 export function authRoutes(app: FastifyInstance) {
   // Passwordless login, step 1: request a magic link.
@@ -37,7 +34,7 @@ export function authRoutes(app: FastifyInstance) {
 
     if (user) {
       const token = await createLoginToken(user.id);
-      const link = `${appUrl}/auth/callback?token=${token}`;
+      const link = magicLinkUrl(token);
       await sendEmail({
         to: email,
         subject: "Your Rave Reviews sign-in link",
