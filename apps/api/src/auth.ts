@@ -35,6 +35,16 @@ export function isAdmin(userId: string): boolean {
 
 // ---------- Magic-link tokens ----------
 
+// Where magic links point — the frontend callback route. The link must land on
+// the app origin so the session cookie is scoped there (incl. via the dev proxy).
+const appUrl = process.env.APP_URL ?? "http://localhost:5173";
+
+// Build the full magic-link URL from a raw login token. One source of truth so
+// the login flow and admin provisioning emit identical links.
+export function magicLinkUrl(rawToken: string): string {
+  return `${appUrl}/auth/callback?token=${rawToken}`;
+}
+
 // Mint a single-use token for a user. Returns the RAW token (goes in the email);
 // only its hash is stored.
 export async function createLoginToken(userId: string): Promise<string> {
