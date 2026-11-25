@@ -1,7 +1,7 @@
 import { desc, eq, sql } from "drizzle-orm";
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
-import { isAdmin, requireUser } from "../auth.js";
+import { isAdmin, requireAdmin, requireUser } from "../auth.js";
 import { db, schema } from "../db/client.js";
 
 const idParams = z.object({ id: z.string().uuid() });
@@ -9,7 +9,37 @@ const listQuery = z.object({
   limit: z.coerce.number().int().min(1).max(200).default(50),
 });
 
+// Invite-only provisioning: an admin creates the account, the user then logs in
+// via magic link. Email is stored lowercased to match the case-insensitive
+// login lookup (see auth request-link).
+const createUserBody = z.object({
+  username: z.string().min(1).max(64),
+  email: z.string().email(),
+});
+
 export function userRoutes(app: FastifyInstance) {
+  // Admin-only: provision a user so they can magic-link in (RR-14). This is the
+  // only way to add an account — signup was removed with RR-3c (invite-only).
+  app.post("/users", { preHandler: requireAdmin }, async (req, reply) => {
+    const body = createUserBody.parse(req.body);
+    try {
+      const [row] = await db
+        .insert(schema.users)
+        .values({ username: body.username, email: body.email.toLowerCase() })
+        .returning({
+          id: schema.users.id,
+          username: schema.users.username,
+          email: schema.users.email,
+          createdAt: schema.users.createdAt,
+        });
+      return reply.code(201).send({ user: row });
+    } catch (err) {
+      // username/email are unique — a clash is the expected conflict, not a 500.
+      req.log.warn({ err }, "create user conflict");
+      return reply.code(409).send({ error: "username or email already taken" });
+    }
+  });
+
   app.get("/users/me", { preHandler: requireUser }, async (req, reply) => {
     const [user] = await db
       .select()
