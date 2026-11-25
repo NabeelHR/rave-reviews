@@ -74,3 +74,24 @@ With neither, the console transport is used and the boot log says so.
 
 Admin is a server-side allowlist: set `ADMIN_IDS` to a comma-separated list of
 user UUIDs in `.env`. There is no client-side way to claim admin.
+
+### Adding users (invite-only provisioning)
+
+There is no self-service signup. An admin creates accounts; the user then logs
+in via magic link. Two admin-only endpoints (authenticate with an admin session
+cookie):
+
+```bash
+# Provision a friend
+curl -X POST $API/v1/users \
+  -H "Content-Type: application/json" -b "rr_session=<admin session>" \
+  -d '{"username":"friend","email":"friend@gmail.com"}'
+
+# Hand them a sign-in link directly (no email needed) — returns { "link": "…" }
+curl -X POST $API/v1/users/<userId>/login-link -b "rr_session=<admin session>"
+```
+
+The first admin is a chicken-and-egg case: create the row directly in the DB
+(`INSERT INTO users (username, email) VALUES (...)`), then add its UUID to
+`ADMIN_IDS` and redeploy. After that, provision everyone else via the endpoints
+above.
